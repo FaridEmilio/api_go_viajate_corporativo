@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/faridEmilio/go_base/internal/logs"
-	"github.com/faridEmilio/go_base/pkg/entities"
+	"github.com/faridEmilio/api_go_gym_manager/internal/logs"
+	"github.com/faridEmilio/api_go_gym_manager/pkg/entities"
 )
 
 type UtilService interface {

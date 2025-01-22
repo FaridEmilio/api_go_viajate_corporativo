@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/faridEmilio/go_base/api/routes"
+	"github.com/faridEmilio/api_go_gym_manager/api/routes"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

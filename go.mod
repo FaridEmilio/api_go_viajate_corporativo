@@ -1,4 +1,4 @@
-module github.com/faridEmilio/go_base
+module github.com/faridEmilio/api_go_gym_manager
 
 go 1.20
 

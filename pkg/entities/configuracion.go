@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/faridEmilio/go_base/pkg/dtos/tools"
+	"github.com/faridEmilio/api_go_gym_manager/pkg/dtos/tools"
 	"gorm.io/gorm"
 )
 

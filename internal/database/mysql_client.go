@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/faridEmilio/go_base/internal/config"
-	"github.com/faridEmilio/go_base/internal/logs"
-
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/faridEmilio/api_go_gym_manager/internal/config"
+	"github.com/faridEmilio/api_go_gym_manager/internal/logs"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

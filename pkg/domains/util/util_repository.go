@@ -3,10 +3,10 @@ package util
 import (
 	"fmt"
 
-	"github.com/faridEmilio/go_base/internal/database"
-	"github.com/faridEmilio/go_base/internal/logs"
-	"github.com/faridEmilio/go_base/pkg/entities"
-	filtros "github.com/faridEmilio/go_base/pkg/filtros/utils"
+	"github.com/faridEmilio/api_go_gym_manager/internal/database"
+	"github.com/faridEmilio/api_go_gym_manager/internal/logs"
+	"github.com/faridEmilio/api_go_gym_manager/pkg/entities"
+	filtros "github.com/faridEmilio/api_go_gym_manager/pkg/filtros/utils"
 )
 
 type UtilRepository interface {

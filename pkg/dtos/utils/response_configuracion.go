@@ -1,8 +1,8 @@
 package utilsdtos
 
 import (
-	"github.com/faridEmilio/go_base/pkg/dtos"
-	"github.com/faridEmilio/go_base/pkg/entities"
+	"github.com/faridEmilio/api_go_gym_manager/pkg/dtos"
+	"github.com/faridEmilio/api_go_gym_manager/pkg/entities"
 )
 
 type ResponseConfiguraciones struct {

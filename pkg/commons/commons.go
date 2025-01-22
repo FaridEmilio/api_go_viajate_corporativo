@@ -16,8 +16,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/faridEmilio/go_base/internal/logs"
-	"github.com/faridEmilio/go_base/pkg/dtos/commonsdtos"
+	"github.com/faridEmilio/api_go_gym_manager/internal/logs"
+	"github.com/faridEmilio/api_go_gym_manager/pkg/dtos/commonsdtos"
 	"github.com/gofiber/fiber/v2"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/text/runes"

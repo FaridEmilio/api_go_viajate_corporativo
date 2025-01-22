@@ -1,5 +1,9 @@
 package administracion
 
+import (
+	"github.com/faridEmilio/api_go_gym_manager/internal/database"
+	
+)
 
 type Repository interface {
 }

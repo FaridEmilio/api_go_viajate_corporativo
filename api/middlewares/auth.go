@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/faridEmilio/go_base/internal/config"
+	"github.com/faridEmilio/api_go_gym_manager/internal/config"
 	"github.com/gofiber/fiber/v2"
 )
 
