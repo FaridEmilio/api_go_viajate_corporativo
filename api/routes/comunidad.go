@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/api/middlewares"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/logs"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/comunidad"
+	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/gofiber/fiber"
 )
 

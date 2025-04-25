@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/config"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/logs"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/config"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

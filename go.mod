@@ -1,4 +1,4 @@
-module github.com/faridEmilio/api_go_viajate_corporativo_corporativo
+module github.com/faridEmilio/api_go_viajate_corporativo
 
 go 1.22
 

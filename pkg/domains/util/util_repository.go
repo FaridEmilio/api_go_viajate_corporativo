@@ -3,10 +3,10 @@ package util
 import (
 	"fmt"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/database"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/logs"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/entities"
-	filtros "github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/filtros/utils"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/utils"
 )
 
 type UtilRepository interface {

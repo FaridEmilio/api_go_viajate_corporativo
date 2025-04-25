@@ -1,8 +1,8 @@
 package administracion
 
 import (
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/database"
 )
 
 type Repository interface {

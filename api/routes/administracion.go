@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/api/middlewares"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/administracion"
+	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
 	"github.com/gofiber/fiber/v2"
 )
 

@@ -1,132 +1,87 @@
 package middlewares
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
+	"os"
+	"strconv"
+	"strings"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/config"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
 
-/*
-	 	MiddlewareManager tiene un campo HTTPClient,
-		que es un puntero a un cliente HTTP. Este cliente HTTP se utiliza para realizar
-		solicitudes a servidores externos.
-*/
+
 type MiddlewareManager struct {
-	HTTPClient *http.Client
+	AuthService *services.AuthService
 }
 
-/*
-Esta función toma un parámetro scope y devuelve otra función
-que actúa como un middleware de autorización para las solicitudes HTTP.
-El middleware verifica si se proporciona un token de autorización en la cabecera Authorization
-de la solicitud.
-*/
+func NewMiddlewareManager(auth *services.AuthService) MiddlewareManager {
+	return MiddlewareManager{
+		AuthService: auth,
+	}
+}
+
 func (m *MiddlewareManager) ValidarPermiso(scope string) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		// El middleware extrae el token de autorización de la cabecera Authorization
-		// de la solicitud de Fiber y lo almacena en la variable bearer.
 		bearer := c.Get("Authorization")
-
-		// Aca validamos la longitud del token
-		// Si es menor o igual a cero significa que no se proporcionó ningún token de autorización
-		// en la solicitud.
-		if len(bearer) <= 0 {
-			return errors.New("acceso no autorizado, debe enviar un token de autenticación")
+		if len(bearer) < 1 {
+			return fiber.NewError(fiber.StatusUnauthorized, "acceso no autorizado, debe enviar un token de autenticación")
 		}
 
-		var result struct {
-			Acceso string `json:"acceso"`
-			ID     int64  `json:"user_id"`
+		parts := strings.Split(bearer, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			return fiber.NewError(fiber.StatusUnauthorized, "formato de token de autenticación inválido")
 		}
 
-		/*
-			Se analiza la URL base que se encuentra en la variable config.AUTH.
-			Si hay un error al analizar la URL, se devuelve un error.
-		*/
-		base, err := url.Parse(config.AUTH)
+		tokenString := parts[1]
+
+		// Parsear el token con MapClaims
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("JWT_SECRET_KEY")), nil
+		})
+		if err != nil || !token.Valid {
+			return fiber.NewError(fiber.StatusUnauthorized, "Token de autenticación inválido")
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return fiber.NewError(fiber.StatusUnauthorized, "Claims inválidos en el token")
+		}
+
+		// Obtener el ID del usuario desde "id"
+		idStr, ok := claims["id"].(string)
+		if !ok {
+			return fiber.NewError(fiber.StatusUnauthorized, "ID de usuario no válido en el token")
+		}
+		userID, err := strconv.Atoi(idStr)
 		if err != nil {
-			return fmt.Errorf("error al crear base url" + err.Error())
+			return fiber.NewError(fiber.StatusUnauthorized, "ID de usuario no es numérico")
 		}
 
-		/*
-			Se agrega "/users/permiso" a la ruta de la URL base.
-			Esto se hace para construir la URL completa a la que se enviará la solicitud POST.
-		*/
-		base.Path += "/users/permiso"
-
-		/*
-			Preparación de datos para la solicitud: Se crea una estructura llamada values que contiene
-			dos campos: SistemaID y Scope. El SistemaID se establece en 1 (aunque este valor
-			puede necesitar ser dinámico dependiendo del sistema).
-			 El Scope se establece utilizando el parámetro recibido en la función.
-		*/
-		var values struct {
-			SistemaID int64  `json:"sistema_id"`
-			Scope     string `json:"scope"`
+		// Validar que el permiso esté incluido en el token
+		rawPerms, ok := claims["permisos"].([]interface{})
+		if !ok {
+			return fiber.NewError(fiber.StatusUnauthorized, "Permisos no definidos en el token")
 		}
-		//FIXME definir como vamos a setear el sistemaId
-		values.SistemaID = 1
-		values.Scope = scope
 
-		// Se codifica la estructura values en formato JSON utilizando json.Marshal.
-		json_data, _ := json.Marshal(values)
+		permMap := make(map[string]struct{}, len(rawPerms))
+		for _, p := range rawPerms {
+			if permStr, ok := p.(string); ok {
+				permMap[permStr] = struct{}{}
+			}
+		}
 
-		/*
-			Se crea una nueva solicitud HTTP POST utilizando la URL completa creada anteriormente
-			y los datos codificados en JSON.
-			Se establecen los encabezados Authorization y Content-Type en la solicitud.
-		*/
-		req, _ := http.NewRequest("POST", base.String(), bytes.NewBuffer(json_data))
+		if _, hasPerm := permMap[scope]; !hasPerm {
+			return fiber.NewError(fiber.StatusForbidden, "No tienes permiso para esta operación")
+		}
 
-		req.Header.Add("Authorization", bearer)
-		req.Header.Add("Content-Type", "application/json")
-
-		/*
-			Envío de la solicitud a la API externa:
-			Se realiza la solicitud HTTP utilizando el cliente HTTP almacenado en m.HTTPClient.
-		*/
-		resp, err := m.HTTPClient.Do(req)
-
-		// Si hay un error durante el envío de la solicitud, se devuelve un error.
+		user, err := m.AuthService.GetUserService(filters.UserFilter{ID: uint(userID)})
 		if err != nil {
-			return fmt.Errorf("error al enviar solicitud a api externa")
+			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener detalles del usuario")
 		}
 
-		/*
-			Manejo de la respuesta: Si la solicitud se realiza correctamente,
-			se verifica el código de estado de la respuesta.
-			Si el código de estado no es 200 (OK), se lee el cuerpo de la respuesta y
-			se devuelve un error de fiber.NewError con un código de estado 403 (Forbidden)
-			y un mensaje de error adecuado.
-		*/
-		if resp.StatusCode != 200 {
-			info, _ := ioutil.ReadAll(req.Body)
-			erro := fmt.Errorf("acceso denegado o permisos insuficientes: %s", info)
-			return fiber.NewError(403, erro.Error())
-		}
-
-		//Si la solicitud es exitosa, se decodifica el cuerpo de la respuesta JSON en la estructura result.
-		json.NewDecoder(resp.Body).Decode(&result)
-
-		/*
-			Almacenamiento del ID del usuario en el contexto de Fiber:
-			Se extrae el ID del usuario de la estructura result y se almacena
-			en el contexto de Fiber con la clave "user_id".
-		*/
-		c.Set("user_id", fmt.Sprint(result.ID))
-
-		/*
-			Continuación del flujo de middleware: Finalmente, se llama a c.Next() para
-			continuar con el flujo del middleware y permitir que otros middleware o controladores
-			manejen la solicitud.
-		*/
+		// Establecer los detalles del usuario en el contexto para uso posterior
+		c.Locals("user", user)
 		return c.Next()
 	}
 }

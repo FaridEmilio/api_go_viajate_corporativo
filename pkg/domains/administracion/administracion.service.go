@@ -3,9 +3,9 @@ package administracion
 import (
 	"math"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/util"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/dtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 )
 
 type service struct {

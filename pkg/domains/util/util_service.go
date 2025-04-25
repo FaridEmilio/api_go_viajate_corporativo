@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/logs"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/entities"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
 
 type UtilService interface {

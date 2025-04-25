@@ -28,4 +28,5 @@ type Usuario struct {
 	Reseña               []Reseña            `json:"reseñas_creadas" gorm:"foreignKey:UsuariosID"`
 	NotificationTokens   []NotificationToken `json:"notification_tokens" gorm:"foreignKey:UsuariosID"`
 	Vehiculos            []Vehiculo          `json:"vehiculos" gorm:"foreignKey:UsuariosID"`
+	Comunidades          []Comunidad         `gorm:"many2many:usuarios_has_comunidades;"` // Relación de muchos a muchos
 }
