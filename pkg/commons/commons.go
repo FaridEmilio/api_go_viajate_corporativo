@@ -16,8 +16,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/faridEmilio/api_go_gym_manager/internal/logs"
-	"github.com/faridEmilio/api_go_gym_manager/pkg/dtos/commonsdtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/logs"
+	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/dtos/commonsdtos"
 	"github.com/gofiber/fiber/v2"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/text/runes"

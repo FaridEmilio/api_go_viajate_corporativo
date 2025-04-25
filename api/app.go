@@ -1,55 +1,52 @@
 package main
 
 import (
+	"net"
 	"net/http"
+	"os"
+	"time"
 
-	"github.com/faridEmilio/api_go_gym_manager/api/routes"
-
+	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/database"
+	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/administracion"
+	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/comunidad"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
-	//"github.com/gofiber/template/html"
+	"gorm.io/gorm/logger"
 )
 
-func InicializarApp(clienteHttp *http.Client) *fiber.App {
+func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, clienteFile *os.File) *fiber.App {
 	//Servicios comunes
-	// fileRepository := commons.NewFileRepository(clienteFile)
-	// commonsService := commons.NewCommons(fileRepository)
-	// algoritmoVerificacionService := commons.NewAlgoritmoVerificacion()
-	//middlewares := middlewares.MiddlewareManager{HTTPClient: clienteHttp}
+	fileRepository := commons.NewFileRepository(clienteFile)
+	commonsService := commons.NewCommons(fileRepository)
 
-	//utilRepository := util.NewUtilRepository(clienteSql)
-	//utilService := util.NewUtilService(utilRepository)
+	// Expo
+	expoClient := expo.NewExpoClient()
 
-	// //Valida si existe un correo para solicitud de nuevas cuentas si no existe lo crea.
-	// utilService.FirstOrCreateConfiguracionService("EMAIL_SOLICITUD_CUENTA", "Email que recibirá la solicitud de apertura de cuenta", "developmenttelco@gmail.com")
+	//Util
+	runEndpoint := util.NewRunEndpoint(clienteHttp)
+	utilRepository := util.NewUtilRepository(clienteSql)
+	utilService := util.NewUtilService(utilRepository, runEndpoint)
 
-	//ApiLink
-	// apiLinkRemoteRepository := apilink.NewRemote(clienteHttp, utilService)
-	// apiLinkService := apilink.NewService(apiLinkRemoteRepository)
+	// Firebase Client
+	firebaseClient := store.NewFirebaseClient()
+	firebaseRemoteRepository := storage.NewFirebaseRemoteRepository(firebaseClient)
 
-	// auditoriaRespository := auditoria.NewAuditoriaRepository(clienteSql)
-	// auditoriaService := auditoria.AuditoriaService(auditoriaRespository)
+	// Viajate
+	// REPOSITORIOS
+	viajateRepository := viajate.NewViajateRepository(clienteSql, utilService)
+	comunidadRepository := comunidad.NewComunidadRepository(clienteSql, utilService)
+	usuarioRepository := usuario.NewUsuarioRepository(clienteSql, utilService)
+	administracionRepository := administracion.NewAdministracionRepository(clienteSql, utilService)
 
-	// administracionRepository := administracion.NewRepository(clienteSql, auditoriaService, utilService)
-	// administracionService := administracion.NewService(administracionRepository, apiLinkService, commonsService, utilService)
+	// SERVICIOS
+	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService, commonsService)
+	viajateService := viajate.NewViajateService(viajateRepository, utilService, commonsService, comunidadService, usuarioRepository)
+	usuarioService := usuario.NewUsuarioService(usuarioRepository, utilService, commonsService, firebaseRemoteRepository)
+	administracionService := administracion.NewAdministracionService(administracionRepository, utilService, commonsService, firebaseRemoteRepository)
 
-	// usuarioRepository := usuario.NewRepository(clienteSql, utilService)
-	// usuarioRemoteRepository := usuario.NewRemote(clienteHttp)
-	// usuarioService := usuario.NewService(usuarioRemoteRepository, usuarioRepository)
-
-	// remoteRepository := prisma.NewRepoasitory(clienteHttp)
-	// prismaRepository := prisma.NewRepository(clienteSql)
-	// prismaService := prisma.NewService(remoteRepository, prismaRepository, commonsService)
-	// pagoOffLineService := pagooffline.NewService(algoritmoVerificacionService)
-	// cierreloteRepository := cierrelote.NewRepository(clienteSql)
-	// storage := storage.NewS3Session()
-	// reafileStore := cierrelote.NewStore(storage)
-	// cierreloteService := cierrelote.NewService(cierreloteRepository, commonsService, utilService, reafileStore)
-	// checkoutRepository := checkout.NewRepository(clienteSql, auditoriaService)
-	// checkoutService := checkout.NewService(checkoutRepository, commonsService, prismaService, pagoOffLineService)
-
+	// MIDDLEWARES
+	middlewares := middlewares.NewMiddlewareManager(clienteHttp, viajateService, comunidadService)
 	//engine := html.New(filepath.Join(filepath.Base("."), "api", "views"), ".html")
 	//engine := html.New("views", ".html")
 	//engine.Delims("${", "}")
@@ -76,37 +73,53 @@ func InicializarApp(clienteHttp *http.Client) *fiber.App {
 	})
 	app.Use(logger.New())
 	app.Use(recover.New())
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowCredentials: true,
+		AllowOrigins:     "https://www.viajate.com.ar, http://127.0.0.1:3300, http://localhost:3000, http://localhost:8081",
+		AllowHeaders:     "Content-Type, Authorization, Accept, Cookie",
+		AllowMethods:     "GET,POST,PUT,DELETE",
+	}))
+	app.Options("/*", func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", c.Get("Origin"))
+		c.Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+		c.Set("Access-Control-Allow-Credentials", "true")
+		return c.SendStatus(fiber.StatusNoContent)
+	})
+	// app.Use(func(ctx *fiber.Ctx) error {
+	// 	config := cors.Config{
+	//AllowCredentials: true,
+	//AllowHeaders:     "Content-Type, Authorization",
+	// }
+
+	// if ctx.Method() == "GET" {
+	// 	config.AllowOrigins = "*"
+	// 	config.AllowMethods = "GET"
+	// }else {
+	//config.AllowOrigins = "https://viajate.com.ar, http://127.0.0.1:80"
+	// 	//config.AllowMethods = "POST, PUT, DELETE"
+	// }
+
+	// 	cors.New(config)(ctx)
+
+	// 	return ctx.Next()
+	// })
+
 	app.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.Send([]byte("Corrientes Telecomunicaciones Api Servicio de Pasarela de Pagos"))
+		return ctx.Send([]byte("Viajate Api"))
 	})
 
-	api := app.Group("/api/v1")
-	routes.PruebaRoutes(api)
-	//aca mando el parametro
-	routes.RegistroRoutes(api)
+	viajateRoutes := app.Group("/api")
+	routes.ViajateRoutes(viajateRoutes, middlewares, viajateService, utilService, commonsService, runEndpoint, comunidadService)
 
-	// checkout := app.Group("/checkout")
-	// routes.CheckoutRoutes(checkout, checkoutService)
+	comunidadRoutes := app.Group("/api/comunidad")
+	routes.ComunidadRoutes(comunidadRoutes, middlewares, comunidadService, utilService, commonsService, runEndpoint)
 
-	//pagooffline := app.Group("/pagooffline")
-	//routes.PrismaRoutes(pagooffline, pagoOffLineService)
+	usuarioRoutes := app.Group("/api/usuario")
+	routes.UsuarioRoutes(usuarioRoutes, middlewares, usuarioService, utilService, commonsService, runEndpoint)
 
-	// prisma := app.Group("/prisma")
-	// routes.PrismaRoutes(prisma, prismaService)
-
-	// cierrelote := app.Group("/cierrelote")
-	// routes.CierreLoteRoutes(cierrelote, cierreloteService, administracionService)
-
-	// administracion := app.Group("/administracion")
-	// routes.AdministracionRoutes(administracion, middlewares, administracionService, utilService)
-
-	// usuario := app.Group("/usuario")
-	// routes.UsuarioRoutes(usuario, middlewares, usuarioService)
-
-	// //Procesos en segundo plano
-	// background.BackgroudServices(administracionService, cierreloteService, utilService)
-
+	administracionRoutes := app.Group("/api/administracion")
+	routes.AdministracionRoutes(administracionRoutes, middlewares, administracionService, utilService, commonsService, runEndpoint)
 	//app.Static("/", "./views")
 	//app.Static("/", filepath.Join(filepath.Base("."), "api", "views"))
 
@@ -114,10 +127,28 @@ func InicializarApp(clienteHttp *http.Client) *fiber.App {
 }
 
 func main() {
+	var HTTPTransport http.RoundTripper = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     false, // <- this is my adjustment
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	var HTTPClient = &http.Client{
+		Transport: HTTPTransport,
+	}
 
 	//HTTPClient.Timeout = time.Second * 120 //Todo validar si este tiempo está bien
+	clienteSQL := database.NewMySQLClient()
+	osFile := os.File{}
 
-	app := InicializarApp(http.DefaultClient)
+	app := InicializarApp(HTTPClient, clienteSQL, &osFile)
 	// el puerto puede que se necesite cambiar
 	_ = app.Listen(":3300")
 }
