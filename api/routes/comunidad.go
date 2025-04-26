@@ -18,8 +18,8 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	app.Get("/:comunidad_id/mis-comunidades", middlewares.ValidarPermiso(), GetMisComunidades(comunidadService))
 
 	// CRUD TRAYECTO
-	app.Post("/:comunidad_id/new-route",  PostRoute(comunidadService))
-	app.Get("/:comunidad_id/routes",  GetRoutes(comunidadService))
+	app.Post("/:comunidad_id/new-route", PostRoute(comunidadService))
+	app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
 }
 
 func GetMisComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {

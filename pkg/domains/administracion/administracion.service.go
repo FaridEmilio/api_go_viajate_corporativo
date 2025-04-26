@@ -3,7 +3,6 @@ package administracion
 import (
 	"math"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 )
@@ -11,14 +10,12 @@ import (
 type service struct {
 	repository Repository
 	util       util.UtilService
-	commons    commons.Commons
 }
 
-func NewAdministracionService(repo Repository, util util.UtilService, commons commons.Commons, firebaseRemoteRepo storage.FirebaseRemoteRepository) AdministracionService {
+func NewAdministracionService(repo Repository, util util.UtilService) AdministracionService {
 	return &service{
 		repository: repo,
 		util:       util,
-		commons:    commons,
 	}
 }
 

@@ -1,17 +1,10 @@
 package util
 
 import (
-	"fmt"
 	"math"
-
-	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
-	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
 
 type UtilService interface {
-	CreateNotificacionService(notificacion entities.Notificacione) (erro error)
-	CreateLogService(log entities.Log) (erro error)
-	LogError(erro string, funcionalidad string)
 	//Redondeo
 	ToFixed(num float64, precision int) float64
 }
@@ -25,31 +18,6 @@ func NewUtilService(r UtilRepository) UtilService {
 
 type utilService struct {
 	repository UtilRepository
-}
-
-func (r *utilService) CreateNotificacionService(notificacion entities.Notificacione) (erro error) {
-	return r.repository.CreateNotificacion(notificacion)
-
-}
-
-func (r *utilService) CreateLogService(log entities.Log) (erro error) {
-	return r.repository.CreateLog(log)
-}
-
-func (r *utilService) LogError(erro string, funcionalidad string) {
-
-	log := entities.Log{
-		Tipo:          entities.Error,
-		Mensaje:       erro,
-		Funcionalidad: funcionalidad,
-	}
-
-	err := r.CreateLogService(log)
-
-	if err != nil {
-		mensaje := fmt.Sprintf("Crear Log: %s. %s", err.Error(), erro)
-		logs.Error(mensaje)
-	}
 }
 
 func (s *utilService) ToFixed(num float64, precision int) float64 {

@@ -3,6 +3,7 @@ package authdtos
 import (
 	"errors"
 
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
 )
 
 type RequestLogin struct {

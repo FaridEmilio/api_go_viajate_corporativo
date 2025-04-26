@@ -2,9 +2,9 @@ package database
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo/internal/config"
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -19,8 +19,13 @@ type MySQLClient struct {
 
 // NewMySQLClient cliente de la base de datos en MySql
 func NewMySQLClient() *MySQLClient {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true", config.USER, config.PASSW, config.HOST, config.PORT, config.DB)
-	// logs.Info(dsn)
+	user := os.Getenv("DB_USER")
+	pass := os.Getenv("DB_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	dbname := os.Getenv("DB_NAME")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true", user, pass, host, port, dbname)
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 		NowFunc: func() time.Time {
