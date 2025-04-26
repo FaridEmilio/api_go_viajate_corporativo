@@ -14,16 +14,12 @@ import (
 
 type ComunidadRepository interface {
 	GetComunidadesRepository(filtro filtros.ComunidadFiltro) (comunidades []entities.Comunidad, erro error)
-	// CONSULTA PARA MIDDLEWARE
-	GetPermisoComunidadesRepository(filtro filtros.ComunidadFiltro) (bool, error)
 
 	// CRUD TRAYECTO
 	PostTrayectoRepository(trayecto entities.Trayecto) error
 	GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error)
 	UpdateTrayectoRepository(id uint, updateFields map[string]interface{}) (erro error)
 
-	//CRUD USUARIO_ROL_COMUNIDAD
-	PostUsuarioRolComunidadReporitory(entity entities.UsuarioRolComunidad) (erro error)
 
 	GetDB() (db *database.MySQLClient)
 }
@@ -42,27 +38,6 @@ type comunidadRepository struct {
 
 func (r *comunidadRepository) GetDB() (db *database.MySQLClient) {
 	return r.SqlClient
-}
-func (r *comunidadRepository) GetPermisoComunidadesRepository(filtro filtros.ComunidadFiltro) (bool, error) {
-	var exists bool
-	resp := r.SqlClient.Model(&entities.Comunidad{})
-
-	if (filtro.UsuarioID > 0) && (filtro.ID > 0) {
-		resp = resp.Joins("INNER JOIN usuarios_roles_comunidades urc ON urc.comunidades_id = comunidades.id").
-			Where("urc.usuarios_id = ? AND urc.comunidades_id = ? AND urc.deleted_at IS NULL", filtro.UsuarioID, filtro.ID)
-	}
-
-	if len(filtro.UsuarioScope) > 0 {
-		resp.Where("urc.rol = ?", filtro.UsuarioScope)
-	}
-
-	resp.Select("1").Limit(1).Scan(&exists) // Usamos EXISTS para verificar si al menos un registro cumple la condición
-	// Si exists es true, significa que existe al menos un registro que cumple la condición
-	if exists {
-		return true, nil // Middleware válido
-	}
-
-	return false, nil // Middleware no válido
 }
 
 func (r *comunidadRepository) GetComunidadesRepository(filtro filtros.ComunidadFiltro) (comunidades []entities.Comunidad, erro error) {
@@ -87,19 +62,7 @@ func (r *comunidadRepository) GetComunidadesRepository(filtro filtros.ComunidadF
 	resp.Order("comunidades.created_at DESC")
 	resp.Find(&comunidades)
 
-	if resp.Error != nil {
-		log := entities.Log{
-			Tipo:          entities.Error,
-			Mensaje:       resp.Error.Error(),
-			Funcionalidad: "GetComunidadesRepository",
-		}
-		if err := r.utilService.CreateLogService(log); err != nil {
-			mensaje := fmt.Sprintf("Crear Log: %s. %s", err.Error(), err.Error())
-			logs.Error(mensaje)
-		}
-	} else if resp.RowsAffected <= 0 {
-		erro = errors.New("no se encontraron comunidades")
-	}
+	
 	return
 }
 
@@ -182,26 +145,6 @@ func (r *comunidadRepository) GetTrayectosRepository(filtro filtros.TrayectoFilt
 		}
 	} else if resp.RowsAffected <= 0 {
 		erro = errors.New("no se encontraron trayectos")
-	}
-	return
-}
-
-func (r *comunidadRepository) PostUsuarioRolComunidadReporitory(entity entities.UsuarioRolComunidad) (erro error) {
-	result := r.SqlClient.Model(entities.UsuarioRolComunidad{}).Create(&entity)
-
-	if result.Error != nil {
-		erro = fmt.Errorf("error al registrar el miembro %d en la comunidad %d", entity.UsuariosID, entity.ComunidadesID)
-		log := entities.Log{
-			Tipo:          entities.Error,
-			Mensaje:       result.Error.Error(),
-			Funcionalidad: "PostUsuarioRolComunidadReporitory",
-		}
-
-		err := r.utilService.CreateLogService(log)
-		if err != nil {
-			mensaje := fmt.Sprintf("%s, %s", err.Error(), result.Error.Error())
-			logs.Error(mensaje)
-		}
 	}
 	return
 }
