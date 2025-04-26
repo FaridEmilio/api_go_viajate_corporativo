@@ -1,18 +1,18 @@
 package middlewares
 
 import (
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
 	"github.com/gofiber/fiber/v2"
 )
 
 
 type MiddlewareManager struct {
-	AuthService *services.AuthService
+	authService aut
 }
 
 func NewMiddlewareManager(auth *services.AuthService) MiddlewareManager {

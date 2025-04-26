@@ -13,13 +13,13 @@ import (
 )
 
 func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager, comunidadService comunidad.ComunidadService, utilService util.UtilService, commons commons.Commons, runEndpoint util.RunEndpoint) {
-	app.Post("/miembro", middlewares.ValidarPermiso(), PostUsuarioComunidad(comunidadService))
+	app.Post("/miembro", middlewares.ValidarPermiso(""), PostUsuarioComunidad(comunidadService))
 
 	app.Get("/:comunidad_id/mis-comunidades", middlewares.ValidarPermiso(), GetMisComunidades(comunidadService))
 
 	// CRUD TRAYECTO
-	app.Post("/:comunidad_id/new-route", middlewares.ValidarPermisoComunidad("MIEMBRO"), PostRoute(comunidadService))
-	app.Get("/:comunidad_id/routes", middlewares.ValidarPermisoComunidad("MIEMBRO"), GetRoutes(comunidadService))
+	app.Post("/:comunidad_id/new-route",  PostRoute(comunidadService))
+	app.Get("/:comunidad_id/routes",  GetRoutes(comunidadService))
 }
 
 func GetMisComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
