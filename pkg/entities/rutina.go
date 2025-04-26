@@ -12,5 +12,5 @@ type Rutina struct {
 	Dia         string    `json:"día"`
 	Hora        string    `json:"hora"`
 	Fecha       time.Time `json:"fecha"`
-	Trayecto    *Trayecto `json:"trayecto" gorm:"foreignKey:TrayectosID"`
+	Trayecto    []Trayecto `gorm:"many2many:trayectos_has_rutinas;"` // Relación de muchos a muchos
 }

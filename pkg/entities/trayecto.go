@@ -18,5 +18,5 @@ type Trayecto struct {
 	Ruta          Ruta            `json:"ruta" gorm:"foreignKey:RutasID"`
 	Comunidad     Comunidad       `json:"comunidad" gorm:"foreignKey:ComunidadesID"`
 	Usuario       Usuario         `json:"usuario" gorm:"foreignKey:UsuariosID"`
-	Rutinas       []*Rutina        `json:"rutinas" gorm:"foreignKey:TrayectosID"`
+	Rutina    []Rutina `gorm:"many2many:trayectos_has_rutinas;"` // Relación de muchos a muchos
 }
