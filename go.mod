@@ -71,6 +71,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/routes"
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
+	"github.com/joho/godotenv"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
@@ -115,6 +117,10 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 }
 
 func main() {
+	// Load environment variables before anything else
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 	var HTTPTransport http.RoundTripper = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
