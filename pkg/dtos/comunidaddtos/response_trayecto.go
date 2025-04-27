@@ -1,8 +1,8 @@
 package comunidaddtos
 
 import (
-	"github.com/faridEmilio/api_go_viajate/pkg/dtos"
-	"github.com/faridEmilio/api_go_viajate/pkg/entities"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
 
 type ResponseTrayectos struct {

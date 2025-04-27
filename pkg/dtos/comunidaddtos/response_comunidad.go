@@ -1,15 +1,15 @@
 package comunidaddtos
 
-import "github.com/faridEmilio/api_go_viajate/pkg/entities"
+import "github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 
 type ResponseComunidades struct {
 	Comunidades []ResponseComunidad `json:"comunidades"`
 }
 
 type ResponseComunidad struct {
-	ID          uint   `json:"id"`
-	Nombre      string `json:"nombre"`
-	Descripcion string `json:"descripcion"`
+	ID          uint               `json:"id"`
+	Nombre      string             `json:"nombre"`
+	Descripcion string             `json:"descripcion"`
 	RolUsuario  entities.EnumRoles `json:"rol_usuario,omitempty"`
 }
 

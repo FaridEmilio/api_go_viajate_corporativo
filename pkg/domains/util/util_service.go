@@ -5,6 +5,8 @@ import (
 )
 
 type UtilService interface {
+	RunEndpoint(method, endpoint string, headers map[string]string, body interface{}, queryParams map[string]string, logRequest bool, response interface{}) error
+
 	//Redondeo
 	ToFixed(num float64, precision int) float64
 }
@@ -18,6 +20,12 @@ func NewUtilService(r UtilRepository) UtilService {
 
 type utilService struct {
 	repository UtilRepository
+}
+
+func (s *utilService) RunEndpoint(method string, endpoint string, headers map[string]string, body interface{}, queryParams map[string]string, logRequest bool, response interface{}) error {
+	
+
+
 }
 
 func (s *utilService) ToFixed(num float64, precision int) float64 {

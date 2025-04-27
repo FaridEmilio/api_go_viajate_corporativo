@@ -27,7 +27,7 @@ type Repository interface {
 	DeletePasswordResetByToken(token string) error
 }
 
-func NewUsuarioRepository(conn *database.MySQLClient, util util.UtilService) Repository {
+func NewAuthRepository(conn *database.MySQLClient, util util.UtilService) Repository {
 	return &repository{
 		SQLClient:   conn,
 		utilService: util,

@@ -1,8 +1,8 @@
 package comunidaddtos
 
 import (
-	"github.com/faridEmilio/api_go_viajate/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate/pkg/entities"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
 
 type ResponseUsuarioComunidad struct {
@@ -28,4 +28,3 @@ func (r *ResponseUsuarioComunidad) FromEntity(entity entities.Usuario) {
 	r.FotoPerfil = entity.FotoPerfil
 	r.Edad = commons.CalcularEdad(entity.FechaNacimiento)
 }
-

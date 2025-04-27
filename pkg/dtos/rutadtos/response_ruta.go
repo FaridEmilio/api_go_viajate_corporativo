@@ -1,6 +1,6 @@
 package rutadtos
 
-import "github.com/faridEmilio/api_go_viajate/pkg/entities"
+import "github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 
 type ResponseRuta struct {
 	ID               uint    `json:"id"`

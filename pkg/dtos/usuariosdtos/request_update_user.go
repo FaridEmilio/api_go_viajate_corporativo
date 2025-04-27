@@ -3,8 +3,8 @@ package usuariosdtos
 import (
 	"errors"
 
-	"github.com/faridEmilio/api_go_viajate/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate/pkg/dtos/viajatedtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/viajatedtos"
 )
 
 type RequestUpdateUser struct {

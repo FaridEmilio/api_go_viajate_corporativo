@@ -5,19 +5,19 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-
 type MiddlewareManager struct {
-	authService aut
+	authService auth.AuthService
 }
 
-func NewMiddlewareManager(auth *services.AuthService) MiddlewareManager {
+func NewMiddlewareManager(auth auth.AuthService) MiddlewareManager {
 	return MiddlewareManager{
-		AuthService: auth,
+		authService: auth,
 	}
 }
 
@@ -75,7 +75,7 @@ func (m *MiddlewareManager) ValidarPermiso(scope string) func(c *fiber.Ctx) erro
 			return fiber.NewError(fiber.StatusForbidden, "No tienes permiso para esta operación")
 		}
 
-		user, err := m.AuthService.GetUserService(filters.UserFilter{ID: uint(userID)})
+		user, err := m.authService.GetUserService(filtros.UsuarioFiltro{ID: uint(userID)})
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener detalles del usuario")
 		}

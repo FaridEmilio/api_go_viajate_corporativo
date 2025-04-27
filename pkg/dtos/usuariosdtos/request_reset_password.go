@@ -3,7 +3,7 @@ package usuariosdtos
 import (
 	"errors"
 
-	"github.com/faridEmilio/api_go_viajate/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
 )
 
 type RequestResetPassword struct {

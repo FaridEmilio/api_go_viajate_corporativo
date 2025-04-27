@@ -3,8 +3,8 @@ package rutadtos
 import (
 	"errors"
 
-	"github.com/faridEmilio/api_go_viajate/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate/pkg/entities"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
 
 type RequestRuta struct {

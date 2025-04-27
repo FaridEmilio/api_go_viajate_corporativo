@@ -6,47 +6,38 @@ import (
 	"os"
 	"time"
 
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/internal/database"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/administracion"
-	"github.com/faridEmilio/api_go_viajate_corporativo_corporativo/pkg/domains/comunidad"
+	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"gorm.io/gorm/logger"
 )
 
 func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, clienteFile *os.File) *fiber.App {
-	//Servicios comunes
-	fileRepository := commons.NewFileRepository(clienteFile)
-	commonsService := commons.NewCommons(fileRepository)
-
-	// Expo
-	expoClient := expo.NewExpoClient()
-
 	//Util
-	runEndpoint := util.NewRunEndpoint(clienteHttp)
 	utilRepository := util.NewUtilRepository(clienteSql)
-	utilService := util.NewUtilService(utilRepository, runEndpoint)
+	utilService := util.NewUtilService(utilRepository)
 
 	// Firebase Client
 	firebaseClient := store.NewFirebaseClient()
 	firebaseRemoteRepository := storage.NewFirebaseRemoteRepository(firebaseClient)
 
-	// Viajate
 	// REPOSITORIOS
-	viajateRepository := viajate.NewViajateRepository(clienteSql, utilService)
 	comunidadRepository := comunidad.NewComunidadRepository(clienteSql, utilService)
-	usuarioRepository := usuario.NewUsuarioRepository(clienteSql, utilService)
+	authRepository := auth.NewAuthRepository(clienteSql, utilService)
 	administracionRepository := administracion.NewAdministracionRepository(clienteSql, utilService)
 
 	// SERVICIOS
 	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService, commonsService)
-	viajateService := viajate.NewViajateService(viajateRepository, utilService, commonsService, comunidadService, usuarioRepository)
-	usuarioService := usuario.NewUsuarioService(usuarioRepository, utilService, commonsService, firebaseRemoteRepository)
+	authService := auth.NewAuthService(authRepository, utilService)
 	administracionService := administracion.NewAdministracionService(administracionRepository, utilService, commonsService, firebaseRemoteRepository)
 
 	// MIDDLEWARES
-	middlewares := middlewares.NewMiddlewareManager(clienteHttp, viajateService, comunidadService)
+	middlewares := middlewares.NewMiddlewareManager(clienteHttp, authService)
 	//engine := html.New(filepath.Join(filepath.Base("."), "api", "views"), ".html")
 	//engine := html.New("views", ".html")
 	//engine.Delims("${", "}")
