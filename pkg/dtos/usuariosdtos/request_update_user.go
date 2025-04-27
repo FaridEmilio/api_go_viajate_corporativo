@@ -4,14 +4,13 @@ import (
 	"errors"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
-	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/viajatedtos"
 )
 
 type RequestUpdateUser struct {
 	Nombre          string                 `json:"nombre"`
 	Apellido        string                 `json:"apellido"`
 	FechaNacimiento string                 `json:"fecha_nacimiento"`
-	Genero          viajatedtos.EnumGenero `json:"genero"`
+	//Genero          viajatedtos.EnumGenero `json:"genero"`
 }
 
 // Valida todos los campos de RequestUpdateUser
@@ -35,8 +34,8 @@ func (req *RequestUpdateUser) Validate() error {
 		return errors.New("La fecha de nacimiento es obligatoria")
 	}
 	// Genero
-	if err := req.Genero.IsGeneroValid(); err != nil {
-		return err
-	}
+	// if err := req.Genero.IsGeneroValid(); err != nil {
+	// 	return err
+	// }
 	return nil
 }

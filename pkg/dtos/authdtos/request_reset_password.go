@@ -3,6 +3,7 @@ package authdtos
 import (
 	"fmt"
 
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
 )
 
 type RequestResetPassword struct {

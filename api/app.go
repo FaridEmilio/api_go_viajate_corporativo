@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
+	"github.com/faridEmilio/api_go_viajate_corporativo/api/routes"
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
-	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
+
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"gorm.io/gorm/logger"
 )
 
 func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, clienteFile *os.File) *fiber.App {
@@ -23,8 +24,8 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 	utilService := util.NewUtilService(utilRepository)
 
 	// Firebase Client
-	firebaseClient := store.NewFirebaseClient()
-	firebaseRemoteRepository := storage.NewFirebaseRemoteRepository(firebaseClient)
+	// firebaseClient := store.NewFirebaseClient()
+	// firebaseRemoteRepository := storage.NewFirebaseRemoteRepository(firebaseClient)
 
 	// REPOSITORIOS
 	comunidadRepository := comunidad.NewComunidadRepository(clienteSql, utilService)
@@ -32,15 +33,12 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 	administracionRepository := administracion.NewAdministracionRepository(clienteSql, utilService)
 
 	// SERVICIOS
-	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService, commonsService)
+	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService)
 	authService := auth.NewAuthService(authRepository, utilService)
-	administracionService := administracion.NewAdministracionService(administracionRepository, utilService, commonsService, firebaseRemoteRepository)
+	administracionService := administracion.NewAdministracionService(administracionRepository, utilService)
 
 	// MIDDLEWARES
-	middlewares := middlewares.NewMiddlewareManager(clienteHttp, authService)
-	//engine := html.New(filepath.Join(filepath.Base("."), "api", "views"), ".html")
-	//engine := html.New("views", ".html")
-	//engine.Delims("${", "}")
+	middlewares := middlewares.NewMiddlewareManager(authService)
 	app := fiber.New(fiber.Config{
 		//Views: engine,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
@@ -62,8 +60,6 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 			return nil
 		},
 	})
-	app.Use(logger.New())
-	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowCredentials: true,
 		AllowOrigins:     "https://www.viajate.com.ar, http://127.0.0.1:3300, http://localhost:3000, http://localhost:8081",
@@ -99,18 +95,19 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.Send([]byte("Viajate Api"))
 	})
+	// Main API Group with versioning
+	api := app.Group("/api/" + os.Getenv("API_VERSION"))
 
-	viajateRoutes := app.Group("/api")
-	routes.ViajateRoutes(viajateRoutes, middlewares, viajateService, utilService, commonsService, runEndpoint, comunidadService)
+	// Subgroups under api/v1
+	comunidadRoutes := api.Group("/comunidad")
+	routes.ComunidadRoutes(comunidadRoutes, middlewares, comunidadService, utilService)
 
-	comunidadRoutes := app.Group("/api/comunidad")
-	routes.ComunidadRoutes(comunidadRoutes, middlewares, comunidadService, utilService, commonsService, runEndpoint)
+	authRoutes := api.Group("/auth")
+	routes.AuthRoutes(authRoutes, middlewares, authService, utilService)
 
-	usuarioRoutes := app.Group("/api/usuario")
-	routes.UsuarioRoutes(usuarioRoutes, middlewares, usuarioService, utilService, commonsService, runEndpoint)
+	administracionRoutes := api.Group("/administracion")
+	routes.AdministracionRoutes(administracionRoutes, middlewares, administracionService, utilService)
 
-	administracionRoutes := app.Group("/api/administracion")
-	routes.AdministracionRoutes(administracionRoutes, middlewares, administracionService, utilService, commonsService, runEndpoint)
 	//app.Static("/", "./views")
 	//app.Static("/", filepath.Join(filepath.Base("."), "api", "views"))
 

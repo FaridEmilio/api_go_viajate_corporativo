@@ -7,17 +7,15 @@ type ResponseComunidades struct {
 }
 
 type ResponseComunidad struct {
-	ID          uint               `json:"id"`
-	Nombre      string             `json:"nombre"`
-	Descripcion string             `json:"descripcion"`
-	RolUsuario  entities.EnumRoles `json:"rol_usuario,omitempty"`
+	ID          uint   `json:"id"`
+	Nombre      string `json:"nombre"`
+	Descripcion string `json:"descripcion"`
 }
 
 func (r *ResponseComunidad) FromEntity(entity entities.Comunidad) {
 	r.ID = entity.ID
 	r.Nombre = entity.Nombre
 	r.Descripcion = entity.Descripcion
-	r.RolUsuario = entity.UsuariosRoles.Rol
 }
 
 func (r *ResponseComunidades) FromEntities(comunidades []entities.Comunidad) {
