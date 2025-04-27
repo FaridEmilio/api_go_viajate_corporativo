@@ -1,14 +1,20 @@
 package comunidad
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
 	"math"
+	"mime/multipart"
+	"time"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/storage"
 )
 
 type ComunidadService interface {
@@ -23,19 +29,22 @@ type ComunidadService interface {
 	// PostAltaMiembroService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
 	GetComunidadesService(filtro comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error)
 	PostComunidadService(request comunidaddtos.RequestComunidad) (erro error)
+	UploadImageToFirebase(file *multipart.FileHeader) (string, error)
 }
 
-func NewComunidadService(repo ComunidadRepository, util util.UtilService) ComunidadService {
+func NewComunidadService(repo ComunidadRepository, util util.UtilService, firebaseRepo storage.FirebaseRemoteRepository) ComunidadService {
 	service := comunidadService{
-		repository: repo,
-		util:       util,
+		repository:               repo,
+		util:                     util,
+		firebaseRemoteRepository: firebaseRepo,
 	}
 	return &service
 }
 
 type comunidadService struct {
-	repository ComunidadRepository
-	util       util.UtilService
+	repository               ComunidadRepository
+	util                     util.UtilService
+	firebaseRemoteRepository storage.FirebaseRemoteRepository
 }
 
 // func (s *comunidadService) PostAltaMiembroService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error) {
@@ -200,11 +209,40 @@ func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestCom
 	return
 }
 
+func (s *comunidadService) UploadImageToFirebase(file *multipart.FileHeader) (string, error) {
+	ctx := context.Background()
+
+	openedFile, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer openedFile.Close()
+
+	fileBytes, err := io.ReadAll(openedFile)
+	if err != nil {
+		return "", err
+	}
+
+	fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+
+	url, err := s.firebaseRemoteRepository.UploadFile(
+		ctx,
+		"comunidades",
+		fileName,
+		fileBytes,
+		file.Header.Get("Content-Type"),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return url, nil
+}
+
 func NewUUID() string {
-	b := make([]byte, 16) // 16 bytes = 32 hex characters
+	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
-		// en caso de error podés manejarlo como quieras, acá devuelvo string vacío
 		return ""
 	}
 

@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
@@ -205,6 +207,25 @@ func PostComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Error al analizar la solicitud",
 			})
+		}
+		condicion := true
+		form, err := c.MultipartForm()
+		if err != nil {
+			fmt.Println("Error al leer el form-data")
+			condicion = false
+		}
+		if condicion {
+			files := form.File["foto_perfil"]
+			if len(files) > 0 {
+				file := files[0]
+				urlFoto, err := comunidadService.UploadImageToFirebase(file)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"error": "Error subiendo la imagen",
+					})
+				}
+				request.FotoPerfil = urlFoto
+			}
 		}
 
 		err = comunidadService.PostComunidadService(request)

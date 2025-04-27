@@ -10,12 +10,14 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/routes"
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/store"
 	"github.com/joho/godotenv"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
@@ -26,8 +28,8 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 	utilService := util.NewUtilService(utilRepository)
 
 	// Firebase Client
-	// firebaseClient := store.NewFirebaseClient()
-	// firebaseRemoteRepository := storage.NewFirebaseRemoteRepository(firebaseClient)
+	firebaseClient := store.NewFirebaseClient()
+	firebaseRemoteRepository := storage.NewFirebaseRemoteRepository(firebaseClient)
 
 	// REPOSITORIOS
 	comunidadRepository := comunidad.NewComunidadRepository(clienteSql, utilService)
@@ -35,7 +37,7 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 	administracionRepository := administracion.NewAdministracionRepository(clienteSql, utilService)
 
 	// SERVICIOS
-	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService)
+	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService, firebaseRemoteRepository)
 	authService := auth.NewAuthService(authRepository, utilService)
 	administracionService := administracion.NewAdministracionService(administracionRepository, utilService)
 
