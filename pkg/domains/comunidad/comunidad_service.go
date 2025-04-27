@@ -1,10 +1,14 @@
 package comunidad
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
 	"math"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 )
 
 type ComunidadService interface {
@@ -17,6 +21,8 @@ type ComunidadService interface {
 
 	// // Alta de un miembro en una comunidad
 	// PostAltaMiembroService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
+	GetComunidadesService(filtro comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error)
+	PostComunidadService(request comunidaddtos.RequestComunidad) (erro error)
 }
 
 func NewComunidadService(repo ComunidadRepository, util util.UtilService) ComunidadService {
@@ -155,3 +161,52 @@ func _setPaginacion(number uint32, size uint32, total int64) (meta dtos.Meta) {
 // 	return
 
 // }
+
+func (s *comunidadService) GetComunidadesService(request comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error) {
+	comunidades, total, erro := s.repository.GetComunidadesRepository(request)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntities(comunidades)
+
+	if request.Size > 0 && request.Number > 0 {
+		response.Meta = _setPaginacion(uint32(request.Number), uint32(request.Size), total)
+	}
+	return
+}
+
+func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestComunidad) (erro error) {
+
+	erro = request.Validate()
+	if erro != nil {
+		return
+	}
+	comunidades, _, erro := s.repository.GetComunidadesRepository(request)
+	if erro != nil {
+		return
+	}
+	if len(comunidades) > 0 {
+		erro = errors.New("comunidad existente")
+		return
+	}
+	comunidad := request.ToEntity()
+	uuid := NewUUID()
+	comunidad.CodigoAcceso = uuid
+	erro = s.repository.PostComunidadRepository(*comunidad)
+	if erro != nil {
+		return
+	}
+	return
+}
+
+func NewUUID() string {
+	b := make([]byte, 16) // 16 bytes = 32 hex characters
+	_, err := rand.Read(b)
+	if err != nil {
+		// en caso de error podés manejarlo como quieras, acá devuelvo string vacío
+		return ""
+	}
+
+	return hex.EncodeToString(b)
+}

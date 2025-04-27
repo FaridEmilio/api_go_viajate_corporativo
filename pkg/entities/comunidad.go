@@ -6,12 +6,12 @@ import (
 
 type Comunidad struct {
 	gorm.Model
-	Nombre       string
-	Descripcion  string
+	Nombre       string    `json:"nombre"`
+	Descripcion  string    `json:"descripcion"`
 	Usuarios     []Usuario `gorm:"many2many:usuarios_has_comunidades;"` // Relación de muchos a muchos
-	CodigoAcceso string
-	Habilitada   bool
-	FotoPerfil   bool
+	CodigoAcceso string    `json:"codigo_acceso"`
+	Habilitada   bool      `json:"habilitada"`
+	FotoPerfil   string    `json:"foto_perfil"`
 }
 
 func (Comunidad) TableName() string {

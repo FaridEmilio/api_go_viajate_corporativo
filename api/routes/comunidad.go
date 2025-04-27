@@ -4,6 +4,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,6 +13,10 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	// CRUD TRAYECTO
 	// app.Post("/:comunidad/new-route", PostRoute(comunidadService))
 	// app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
+
+	//CRUD COMUNIDAD
+	app.Get("/comunidades", GetComunidades(comunidadService))
+	app.Post("/comunidad", PostComunidad(comunidadService))
 }
 
 // func GetMisComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
@@ -164,3 +169,54 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 // 		})
 // 	}
 // }
+
+func GetComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		var request comunidaddtos.RequestComunidad
+		err := c.BodyParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error en los parámetros enviados",
+			})
+		}
+
+		response, err := comunidadService.GetComunidadesService(request)
+
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "No se pudo obtener las comunidades. " + err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Operación de consulta de comunidades exitosa.",
+		})
+	}
+}
+
+func PostComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request comunidaddtos.RequestComunidad
+		err := c.BodyParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
+
+		err = comunidadService.PostComunidadService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"message": "comunidad registrada con exito",
+		})
+	}
+}

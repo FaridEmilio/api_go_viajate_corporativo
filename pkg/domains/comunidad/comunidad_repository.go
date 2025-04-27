@@ -1,14 +1,18 @@
 package comunidad
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
-	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/comunidad"
 )
 
 type ComunidadRepository interface {
-	GetComunidadesRepository(filtro filtros.ComunidadFiltro) (comunidades []entities.Comunidad, erro error)
+	GetComunidadesRepository(request comunidaddtos.RequestComunidad) (comunidades []entities.Comunidad, total int64, erro error)
+	PostComunidadRepository(comunidad entities.Comunidad) (erro error)
 
 	// CRUD TRAYECTO
 	// PostTrayectoRepository(trayecto entities.Trayecto) error
@@ -34,27 +38,54 @@ func (r *comunidadRepository) GetDB() (db *database.MySQLClient) {
 	return r.SqlClient
 }
 
-func (r *comunidadRepository) GetComunidadesRepository(filtro filtros.ComunidadFiltro) (comunidades []entities.Comunidad, erro error) {
+func (r *comunidadRepository) GetComunidadesRepository(request comunidaddtos.RequestComunidad) (comunidades []entities.Comunidad, total int64, erro error) {
 	resp := r.SqlClient.Model(&entities.Comunidad{})
 
 	// FILTROS
-	if filtro.ID > 0 {
-		resp.Where("id = ?", filtro.ID).Limit(1)
+	if request.ID > 0 {
+		resp.Where("id = ?", request.ID).Limit(1)
 	}
-	if filtro.UsuarioID > 0 {
+	if request.UsuarioID > 0 {
 		resp = resp.Joins("LEFT JOIN usuarios_roles_comunidades urc ON urc.comunidades_id = comunidades.id").
-			Where("urc.usuarios_id = ?", filtro.UsuarioID).Preload("UsuariosRoles", "usuarios_id = ?", filtro.UsuarioID)
+			Where("urc.usuarios_id = ?", request.UsuarioID).Preload("UsuariosRoles", "usuarios_id = ?", request.UsuarioID)
 	}
-	if len(filtro.Nombre) > 0 {
-		resp.Where("nombre LIKE ?", "%"+filtro.Nombre+"%")
+	if len(request.Nombre) > 0 {
+		resp.Where("nombre REGEXP ?", request.Nombre)
 	}
 
-	if len(filtro.CodigoAcceso) > 0 {
-		resp.Where("codigo_acceso = ?", filtro.CodigoAcceso).Select("comunidades.id, comunidades.nombre")
+	if len(request.CodigoAcceso) > 0 {
+		resp.Where("codigo_acceso = ?", request.CodigoAcceso)
+	}
+
+	if request.Number > 0 && request.Size > 0 {
+
+		resp.Count(&total)
+
+		if resp.Error != nil {
+			erro = fmt.Errorf(ERROR_CARGAR_TOTAL_FILAS)
+		}
+
+		offset := (request.Number - 1) * request.Size
+		resp.Limit(int(request.Size))
+		resp.Offset(int(offset))
 	}
 
 	resp.Order("comunidades.created_at DESC")
 	resp.Find(&comunidades)
+	if resp.Error != nil {
+		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
+		return
+	}
+
+	return
+}
+
+func (r *comunidadRepository) PostComunidadRepository(comunidad entities.Comunidad) (erro error) {
+	err := r.SqlClient.Create(&comunidad).Error
+	if err != nil {
+		erro = errors.New("no se pudo crear la comunidad")
+		return
+	}
 
 	return
 }
