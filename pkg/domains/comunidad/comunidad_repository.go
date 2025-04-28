@@ -13,7 +13,10 @@ import (
 type ComunidadRepository interface {
 	GetComunidadesRepository(request comunidaddtos.RequestComunidad) (comunidades []entities.Comunidad, total int64, erro error)
 	PostComunidadRepository(comunidad entities.Comunidad) (erro error)
-
+	UpdateComunidadRepository(comunidad entities.Comunidad) (erro error)
+	PostUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
+	GetUsuarioComunidadRepository(request comunidaddtos.RequestAltaMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error)
+	UpdateUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
 	// CRUD TRAYECTO
 	// PostTrayectoRepository(trayecto entities.Trayecto) error
 	// GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error)
@@ -87,6 +90,43 @@ func (r *comunidadRepository) PostComunidadRepository(comunidad entities.Comunid
 		return
 	}
 
+	return
+}
+
+func (r *comunidadRepository) UpdateComunidadRepository(comunidad entities.Comunidad) (erro error) {
+	err := r.SqlClient.Save(&comunidad).Error
+	if err != nil {
+		erro = errors.New("no se pudo actualizar la comunidad")
+		return
+	}
+	return
+}
+
+func (r *comunidadRepository) GetUsuarioComunidadRepository(request comunidaddtos.RequestAltaMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error) {
+	resp := r.SqlClient.Model(&entities.Comunidad{}).Where("comunidades_id = ? AND usuarios_id = ?", request.ComunidadId, request.UsuariosId).Find(&usuariocomunidad)
+	if resp.Error != nil {
+		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
+		return
+	}
+	return
+}
+
+func (r *comunidadRepository) PostUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error) {
+	err := r.SqlClient.Create(&usuariocomunidad).Error
+	if err != nil {
+		erro = errors.New("no se pudo crear la comunidad")
+		return
+	}
+
+	return
+}
+
+func (r *comunidadRepository) UpdateUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error) {
+	err := r.SqlClient.Save(&usuariocomunidad).Error
+	if err != nil {
+		erro = errors.New("no se pudo actualizar usuario comunidades")
+		return
+	}
 	return
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/storage"
 )
 
@@ -26,10 +27,12 @@ type ComunidadService interface {
 	// GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error)
 
 	// // Alta de un miembro en una comunidad
-	// PostAltaMiembroService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
 	GetComunidadesService(filtro comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error)
 	PostComunidadService(request comunidaddtos.RequestComunidad) (erro error)
 	UploadImageToFirebase(file *multipart.FileHeader) (string, error)
+	PutComunidadService(request comunidaddtos.RequestComunidad) (erro error)
+	PostUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
+	PutUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error)
 }
 
 func NewComunidadService(repo ComunidadRepository, util util.UtilService, firebaseRepo storage.FirebaseRemoteRepository) ComunidadService {
@@ -247,4 +250,93 @@ func NewUUID() string {
 	}
 
 	return hex.EncodeToString(b)
+}
+
+func (s *comunidadService) PutComunidadService(request comunidaddtos.RequestComunidad) (erro error) {
+	if request.ID <= 0 {
+		erro = errors.New("debe proporcionar un id para buscar la comunidad")
+		return
+	}
+	comunidades, _, erro := s.repository.GetComunidadesRepository(request)
+	if erro != nil {
+		return
+	}
+	if len(comunidades) < 0 {
+		erro = errors.New("comunidad inexistente")
+		return
+	}
+	comunidad := comunidades[0]
+	if len(request.Nombre) > 0 {
+		comunidad.Nombre = request.Nombre
+	}
+	if len(request.Descripcion) > 0 {
+		comunidad.Descripcion = request.Descripcion
+	}
+	if request.Habilitada != nil {
+		comunidad.Habilitada = *request.Habilitada
+	}
+
+	erro = s.repository.UpdateComunidadRepository(comunidad)
+	return
+}
+
+func (s *comunidadService) PostUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error) {
+	if len(request.Codigo) < 1 {
+		erro = errors.New("debe proporcionar un codigo de comunidad")
+		return
+	}
+	if request.UsuariosId < 1 {
+		erro = errors.New("debe proporcionar un usuario")
+		return
+	}
+	req := comunidaddtos.RequestComunidad{
+		CodigoAcceso: request.Codigo,
+	}
+	comunidades, _, erro := s.repository.GetComunidadesRepository(req)
+	if erro != nil {
+		return
+	}
+	if len(comunidades) < 1 {
+		erro = errors.New("comunidad inexistente")
+		return
+	}
+	if comunidades[0].Habilitada == false {
+		erro = errors.New("comunidad desactivada")
+		return
+	}
+
+	entity := entities.UsuariosHasComunidades{
+		ComunidadesId: comunidades[0].ID,
+		UsuariosId:    request.UsuariosId,
+	}
+
+	erro = s.repository.PostUsuarioComunidadRepository(entity)
+	if erro != nil {
+		return
+	}
+
+	nombreComunidad = comunidades[0].Nombre
+	return
+}
+
+func (s *comunidadService) PutUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error) {
+	if request.Activo == nil {
+		erro = errors.New("debe enviar una funcion")
+		return
+	}
+	usuariocomunidad, erro := s.repository.GetUsuarioComunidadRepository(request)
+	if erro != nil {
+		return
+	}
+	if len(usuariocomunidad) < 1 {
+		erro = errors.New("comunidad inexistente")
+		return
+	}
+	if request.Activo != nil {
+		usuariocomunidad[0].Activo = *request.Activo
+	}
+
+	// Ahora actualizamos en base de datos
+	erro = s.repository.UpdateUsuarioComunidadRepository(usuariocomunidad[0])
+	return
 }

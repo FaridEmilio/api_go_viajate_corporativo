@@ -19,6 +19,9 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	//CRUD COMUNIDAD
 	app.Get("/comunidades", GetComunidades(comunidadService))
 	app.Post("/comunidad", PostComunidad(comunidadService))
+	app.Post("/update-comunidad", PutComunidad(comunidadService))
+
+	app.Post("/registrar-usuario-comunidad", PostUsuarioComunidad(comunidadService))
 }
 
 // func GetMisComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
@@ -176,7 +179,7 @@ func GetComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
 		var request comunidaddtos.RequestComunidad
-		err := c.BodyParser(&request)
+		err := c.QueryParser(&request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Error en los parámetros enviados",
@@ -238,6 +241,79 @@ func PostComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
 			"message": "comunidad registrada con exito",
+		})
+	}
+}
+
+func PutComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request comunidaddtos.RequestComunidad
+
+		err := c.BodyParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
+		err = comunidadService.PutComunidadService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"message": "comunidad actualizada con exito",
+		})
+	}
+}
+
+func PostUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request comunidaddtos.RequestAltaMiembro
+		err := c.BodyParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
+
+		nombre, err := comunidadService.PostUsuarioComunidadService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": err.Error(),
+			})
+		}
+		message := "Usuario registrado en la " + nombre + " con exito"
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"message": message,
+		})
+	}
+}
+
+func PutUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request comunidaddtos.RequestAltaMiembro
+
+		err := c.BodyParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
+		err = comunidadService.PutUsuarioComunidadService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"message": "usuario comunidad actualizada con exito",
 		})
 	}
 }

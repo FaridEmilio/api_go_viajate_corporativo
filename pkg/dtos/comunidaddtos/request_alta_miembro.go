@@ -7,8 +7,10 @@ import (
 )
 
 type RequestAltaMiembro struct {
-	Codigo     string `json:"codigo"`
-	UsuariosID uint
+	Codigo      string `json:"codigo"`
+	UsuariosId  uint   `json:"usuarios_id"`
+	ComunidadId uint   `json:"comunidad_id"`
+	Activo      *bool  `json:"activo"`
 }
 
 func (r *RequestAltaMiembro) IsValidCode() error {
