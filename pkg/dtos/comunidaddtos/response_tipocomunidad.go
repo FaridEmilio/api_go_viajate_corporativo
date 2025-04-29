@@ -7,7 +7,7 @@ import (
 
 type ResponseTipoComunidad struct {
 	Id     uint   `json:"id"`
-	Nombre string `json:"nombre"`
+	Tipo   string `json:"tipo"`
 	Activo bool   `json:"activo"`
 }
 
@@ -18,7 +18,7 @@ type ResponseTipoComunidades struct {
 
 func (r *ResponseTipoComunidad) FromEntityTipoComunidad(entity entities.TipoComunidad) {
 	r.Id = entity.ID
-	r.Nombre = entity.Nombre
+	r.Tipo = entity.Tipo
 	r.Activo = entity.Activo
 }
 

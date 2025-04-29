@@ -8,6 +8,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+	"gorm.io/gorm"
 )
 
 type ComunidadRepository interface {
@@ -61,6 +62,27 @@ func (r *comunidadRepository) GetComunidadesRepository(request comunidaddtos.Req
 		resp.Where("codigo_acceso = ?", request.CodigoAcceso)
 	}
 
+	if request.LocalidadId > 0 {
+		resp = resp.Joins("INNER JOIN localidades l ON l.id = comunidades.localidades_id").
+			Where("l.id = ?", request.LocalidadId).
+			Preload("Localidad", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "nombre", "provincias_id").
+					Preload("Provincia", func(db *gorm.DB) *gorm.DB {
+						return db.Select("id", "nombre", "paises_id").
+							Preload("Pais", func(db *gorm.DB) *gorm.DB {
+								return db.Select("id", "nombre")
+							})
+					})
+			})
+	}
+
+	if request.TipoComunidadId > 0 {
+		resp = resp.Joins("INNER JOIN tipo_comunidad tp ON tp.id = comunidades.tipo_comunidad_id").
+			Where("tp.id = ?", request.TipoComunidadId).
+			Preload("TipoComunidad", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "tipo")
+			})
+	}
 	if request.Number > 0 && request.Size > 0 {
 
 		resp.Count(&total)

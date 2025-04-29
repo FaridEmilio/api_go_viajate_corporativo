@@ -4,6 +4,10 @@ import "gorm.io/gorm"
 
 type TipoComunidad struct {
 	gorm.Model
-	Nombre string `json:"nombre"`
+	Tipo   string `json:"tipo"`
 	Activo bool   `json:"activo"`
+}
+
+func (TipoComunidad) TableName() string {
+	return "tipo_comunidad"
 }

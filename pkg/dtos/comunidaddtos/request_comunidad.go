@@ -24,8 +24,8 @@ type RequestComunidad struct {
 	Calle           string  `json:"calle"`
 	Altura          int     `json:"altura"`
 	NumeroPiso      uint    `json:"numero_piso"`
-	Lat             float32 `json:"lat"`
-	Lng             float32 `json:"lng"`
+	Lat             float64 `json:"lat"`
+	Lng             float64 `json:"lng"`
 	Size            int64   `json:"size"`
 	Number          int64   `json:"number"`
 }
@@ -69,7 +69,7 @@ func (r *RequestComunidad) ToEntity() *entities.Comunidad {
 		Lat:             r.Lat,
 		Lng:             r.Lng,
 		TipoComunidadId: r.TipoComunidadId,
-		LocalidadId:     r.LocalidadId,
+		LocalidadesId:   r.LocalidadId,
 	}
 
 	if r.Habilitada != nil {
