@@ -11,6 +11,8 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/routes"
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/store"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
@@ -64,9 +66,12 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 			return nil
 		},
 	})
+
+	app.Use(logger.New())
+	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowCredentials: true,
-		AllowOrigins:     "https://www.viajate.com.ar, http://127.0.0.1:3300, http://localhost:3000, http://localhost:8081",
+		AllowOrigins:     os.Getenv("ALLOW_ORIGIN"),
 		AllowHeaders:     "Content-Type, Authorization, Accept, Cookie",
 		AllowMethods:     "GET,POST,PUT,DELETE",
 	}))
@@ -77,28 +82,11 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 		c.Set("Access-Control-Allow-Credentials", "true")
 		return c.SendStatus(fiber.StatusNoContent)
 	})
-	// app.Use(func(ctx *fiber.Ctx) error {
-	// 	config := cors.Config{
-	//AllowCredentials: true,
-	//AllowHeaders:     "Content-Type, Authorization",
-	// }
-
-	// if ctx.Method() == "GET" {
-	// 	config.AllowOrigins = "*"
-	// 	config.AllowMethods = "GET"
-	// }else {
-	//config.AllowOrigins = "https://viajate.com.ar, http://127.0.0.1:80"
-	// 	//config.AllowMethods = "POST, PUT, DELETE"
-	// }
-
-	// 	cors.New(config)(ctx)
-
-	// 	return ctx.Next()
-	// })
 
 	app.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.Send([]byte("Viajate Api"))
+		return ctx.Send([]byte("API Viajate Corporativo"))
 	})
+
 	// Main API Group with versioning
 	api := app.Group("/api/" + os.Getenv("API_VERSION"))
 
@@ -111,9 +99,6 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 
 	administracionRoutes := api.Group("/administracion")
 	routes.AdministracionRoutes(administracionRoutes, middlewares, administracionService, utilService)
-
-	//app.Static("/", "./views")
-	//app.Static("/", filepath.Join(filepath.Base("."), "api", "views"))
 
 	return app
 }
