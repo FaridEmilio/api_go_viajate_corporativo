@@ -71,5 +71,6 @@ func (r *RequestComunidad) ToEntity() *entities.Comunidad {
 		TipoComunidadId: r.TipoComunidadId,
 		LocalidadesId:   r.LocalidadId,
 	}
+	comunidad.Habilitada = true
 	return comunidad
 }
