@@ -8,9 +8,9 @@ import (
 
 type Usuario struct {
 	gorm.Model
-	Uuid                 string              `json:"uuid"`
 	Nombre               string              `json:"nombre"`
 	Apellido             string              `json:"apellido"`
+	Dni                  string              `json:"dni"`
 	Email                string              `gorm:"unique;not null" json:"email"`
 	EmailVerified        bool                `json:"email_verified"`
 	Activo               bool                `json:"activo"`

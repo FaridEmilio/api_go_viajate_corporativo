@@ -1,14 +1,25 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/authdtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
+	Register(request authdtos.RequestNewUser) (userEntity entities.Usuario, erro error)
 	Login(request authdtos.RequestLogin) (response authdtos.ResponseLogin, err error)
 	GetUserService(filter filtros.UsuarioFiltro) (response authdtos.ResponseUsuario, erro error)
+	GetTokensService(user entities.Usuario) (tokenResponse authdtos.TokenResponse, erro error)
 	//UpdateProfilePictureService(ctx context.Context, userID uint, fileHeader *multipart.FileHeader) (path string, err error)
 	//DeleteProfilePictureService(ctx context.Context, userID uint) (erro error)
 	//ChangePasswordService(userID uint, request usuariosdtos.RequestChangePassword) (erro error)
@@ -29,8 +40,137 @@ func NewAuthService(repo Repository, util util.UtilService) AuthService {
 	}
 }
 
-// Login implements UsuarioService.
 func (s *service) Login(request authdtos.RequestLogin) (response authdtos.ResponseLogin, err error) {
+	// Valido request
+	err = request.Validate()
+	if err != nil {
+		return response, err
+	}
+
+	// Recupera el usuario por email
+	user, err := s.repository.FindByEmail(request.Email)
+	if err != nil {
+		return response, errors.New("No pudimos encontrar tu usuario. Por favor, revisa los datos e inténtalo de nuevo")
+	}
+
+	// Verificar la contraseña
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Contraseña), []byte(request.Password)); err != nil {
+		return response, errors.New("contraseña incorrecta, inténtalo de nuevo")
+	}
+	// Genera tokens
+	tokens, err := s.GetTokensService(user)
+	if err != nil {
+		return
+	}
+
+	response.User.FromEntity(user)
+	response.Token = tokens.AccessToken
+	response.RefreshToken = tokens.RefreshToken
+	return
+}
+
+func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdtos.TokenResponse, erro error) {
+	rol := user.Rol.Rol
+	permisos := make([]string, len(user.Rol.Permisos))
+	for i, perm := range user.Rol.Permisos {
+		permisos[i] = perm.Permiso
+	}
+
+	expiration := time.Now().Add(48 * time.Hour).Unix()
+	claims := jwt.MapClaims{
+		"iss":  "Viajate",
+		"id":   fmt.Sprintf("%d", user.ID),
+		"user": user.Email,
+		// "inact":    10,
+		"exp":      expiration,
+		"rol":      rol,
+		"permisos": permisos,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+	if err != nil {
+		return tokenResponse, fmt.Errorf("no se pudo firmar el token")
+	}
+
+	refreshTokenExpiration := time.Now().Add(30 * 24 * time.Hour)
+	refreshTokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    "GoAccess",
+		ID:        fmt.Sprintf("%d", user.ID),
+		ExpiresAt: jwt.NewNumericDate(time.Unix(refreshTokenExpiration.Unix(), 0)),
+	})
+
+	refreshToken, err := refreshTokenClaims.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+	if err != nil {
+		return tokenResponse, fmt.Errorf("no se pudo generar el refresh token")
+	}
+
+	tokenResponse.AccessToken = signedToken
+	tokenResponse.RefreshToken = refreshToken
+	return
+}
+
+func (s *service) Register(request authdtos.RequestNewUser) (userEntity entities.Usuario, erro error) {
+	emailValido := commons.IsEmailValid(request.Email)
+	if !emailValido {
+		erro = fmt.Errorf("El correo electrónico ingresado no es válido. Por favor, verifica e intenta nuevamente")
+		return
+	}
+
+	// Verifico existencia de usuario registrado con email solicitado
+	existsMail, erro := s.repository.GetUserExistsByEmail(request.Email)
+	if erro != nil {
+		return
+	}
+
+	if existsMail {
+		erro = fmt.Errorf("El correo electrónico ingresado ya está registrado")
+		return
+	}
+
+	erro = request.Validate()
+	if erro != nil {
+		erro = fmt.Errorf(erro.Error())
+		return
+	}
+
+	fechaNacimiento, erro := commons.IsAdult(request.FechaNacimiento)
+	if erro != nil {
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Contraseña), 14)
+	if err != nil {
+		erro = fmt.Errorf("No se pudo completar el registro con éxito")
+		return
+	}
+
+	user := request.ToEntity()
+	user.Contraseña = hashedPassword
+	user.FechaNacimiento = fechaNacimiento
+
+	userEntity, erro = s.repository.PostUsuarioRepository(user)
+	if erro != nil {
+		erro = fmt.Errorf("Error al crear usuario: " + erro.Error())
+		return
+	}
+
+	if userEntity.ID < 1 {
+		erro = fmt.Errorf("No se pudo completar el registro con éxito")
+		return
+	}
+
+	// requestMailVerify := viajatedtos.RequestUserEmailVerification{
+	// 	ID:    userEntity.ID,
+	// 	Email: userEntity.Email,
+	// 	Name:  userEntity.Nombre,
+	// }
+
+	// erro = s.GenerateAndSendEmailVerificationCode(requestMailVerify, runEndpoint)
+	// if erro != nil {
+	// 	return
+	// }
+
 	return
 }
 

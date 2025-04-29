@@ -2,20 +2,24 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
+	"gorm.io/gorm"
 )
 
 type Repository interface {
 	GetUserRepository(filter filtros.UsuarioFiltro, fields []string) (user entities.Usuario, erro error)
-
+	PostUsuarioRepository(user entities.Usuario) (userEntity entities.Usuario, erro error)
 	UpdateUserDataRepository(userID uint, updateFields map[string]interface{}) (erro error)
 	GetUserByIDRepository(userID uint, fields []string) (user entities.Usuario, erro error)
 	GetUsuariosRepository(filtro filtros.UsuarioFiltro) (usuarios []entities.Usuario, erro error)
 
+	FindByEmail(email string) (entities.Usuario, error)
+	GetUserExistsByEmail(email string) (bool, error)
 	// Email verification
 	CreateTokenEmailVerification(entity entities.EmailToken) error
 	FindUserIDByEmailToken(token string) (userID uint, erro error)
@@ -39,6 +43,42 @@ type repository struct {
 	utilService util.UtilService
 }
 
+func (r *repository) PostUsuarioRepository(user entities.Usuario) (entities.Usuario, error) {
+	result := r.SQLClient.Create(&user)
+	if result.Error != nil {
+		erro := fmt.Errorf("error al crear usuario")
+		return entities.Usuario{}, erro
+	}
+	return user, nil
+}
+
+func (r *repository) FindByEmail(email string) (entities.Usuario, error) {
+	var user entities.Usuario
+	err := r.SQLClient.Where("email = ?", email).
+		Preload("Rol", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "rol") // solo el nombre del rol
+		}).
+		Preload("Rol.Permisos", func(db *gorm.DB) *gorm.DB {
+			return db.Select("permisos.id", "permisos.permiso")
+		}).
+		First(&user).Error
+
+	return user, err
+}
+
+func (r *repository) GetUserExistsByEmail(email string) (bool, error) {
+	// Realizamos la consulta utilizando SELECT 1 para verificar la existencia del usuario
+	var exists bool
+	err := r.SQLClient.Model(&entities.Usuario{}).
+		Where("email = ?", email).
+		Select("1").
+		Limit(1).
+		Scan(&exists).Error
+	if err != nil {
+		return false, fmt.Errorf("error al verificar existencia del usuario")
+	}
+	return exists, nil
+}
 func (r *repository) UpdateUserDataRepository(id uint, updateFields map[string]interface{}) (erro error) {
 	if err := r.SQLClient.Model(&entities.Usuario{}).
 		Where("id = ?", id).
