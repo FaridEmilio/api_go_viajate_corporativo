@@ -48,22 +48,18 @@ func (r *comunidadRepository) GetComunidadesRepository(request comunidaddtos.Req
 
 	// FILTROS
 	if request.ID > 0 {
-		resp.Where("id = ?", request.ID).Limit(1)
+		resp.Where("comunidades.id = ?", request.ID).Limit(1)
 	}
-	if request.UsuarioID > 0 {
-		resp = resp.Joins("LEFT JOIN usuarios_roles_comunidades urc ON urc.comunidades_id = comunidades.id").
-			Where("urc.usuarios_id = ?", request.UsuarioID).Preload("UsuariosRoles", "usuarios_id = ?", request.UsuarioID)
-	}
+
 	if len(request.Nombre) > 0 {
-		resp.Where("nombre REGEXP ?", request.Nombre)
+		resp.Where("comunidades.nombre REGEXP ?", request.Nombre)
 	}
 
 	if len(request.CodigoAcceso) > 0 {
-		resp.Where("codigo_acceso = ?", request.CodigoAcceso)
+		resp.Where("comunidades.codigo_acceso = ?", request.CodigoAcceso)
 	}
 
 	resp = resp.Joins("INNER JOIN localidades l ON l.id = comunidades.localidades_id").
-		Where("l.id = ?", request.LocalidadId).
 		Preload("Localidad", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "nombre", "provincias_id").
 				Preload("Provincia", func(db *gorm.DB) *gorm.DB {
@@ -75,7 +71,6 @@ func (r *comunidadRepository) GetComunidadesRepository(request comunidaddtos.Req
 		})
 
 	resp = resp.Joins("INNER JOIN tipo_comunidad tp ON tp.id = comunidades.tipo_comunidad_id").
-		Where("tp.id = ?", request.TipoComunidadId).
 		Preload("TipoComunidad", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "tipo")
 		})
@@ -151,6 +146,9 @@ func (r *comunidadRepository) UpdateUsuarioComunidadRepository(usuariocomunidad 
 
 func (r *comunidadRepository) GetTipoComunidadRepository(request comunidaddtos.RequestTipoComunidad) (tipocomunidad []entities.TipoComunidad, total int64, erro error) {
 	resp := r.SqlClient.Model(&entities.TipoComunidad{})
+	if request.Id > 0 {
+		resp.Where("id = ?", request.Id)
+	}
 	if request.Number > 0 && request.Size > 0 {
 
 		resp.Count(&total)
@@ -163,7 +161,6 @@ func (r *comunidadRepository) GetTipoComunidadRepository(request comunidaddtos.R
 		resp.Limit(int(request.Size))
 		resp.Offset(int(offset))
 	}
-	resp.Order("tipocomunidad.created_at DESC")
 	resp.Find(&tipocomunidad)
 	if resp.Error != nil {
 		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
