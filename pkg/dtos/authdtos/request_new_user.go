@@ -12,6 +12,7 @@ import (
 type RequestNewUser struct {
 	Nombre            string     `json:"nombre"`
 	Apellido          string     `json:"apellido"`
+	Dni               string     `json:"dni"`
 	Email             string     `gorm:"unique;not null" json:"email"`
 	Contraseña        string     `json:"contraseña"`
 	Telefono          string     `json:"telefono"`
@@ -48,6 +49,10 @@ func (req *RequestNewUser) Validate() error {
 	}
 	if err := isValidName(req.Apellido); err != nil {
 		return err
+	}
+	// TODO agregar validacion para numero de dni
+	if commons.StringIsEmpty(req.Dni) {
+		return errors.New("El DNI es obligatorio")
 	}
 	if strings.TrimSpace(req.Email) == "" {
 		return errors.New("El email es obligatorio")
@@ -151,6 +156,7 @@ func (r *RequestNewUser) ToEntity() (UserEntity entities.Usuario) {
 	UserEntity.Nombre = FormatNombre(r.Nombre)
 	UserEntity.Apellido = FormatNombre(r.Apellido)
 	UserEntity.Email = r.Email
+	UserEntity.Dni = r.Dni
 	UserEntity.Telefono = FormatPhoneNumber(r.Telefono)
 	UserEntity.Genero = string(r.Genero)
 	UserEntity.Terminos = true
