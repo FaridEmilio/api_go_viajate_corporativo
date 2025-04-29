@@ -120,9 +120,11 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 
 func main() {
 	// Load environment variables before anything else
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, continuing with environment variables")
 	}
+
 	var HTTPTransport http.RoundTripper = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
