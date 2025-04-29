@@ -5,6 +5,8 @@ import (
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/administraciondtos"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
 )
 
 type service struct {
@@ -49,3 +51,13 @@ func _setPaginacion(number uint32, size uint32, total int64) (meta dtos.Meta) {
 // 	response.FromEntities(miembros)
 // 	return
 // }
+
+func (s *service) GetPaisesService(filtro filtros.PaisFiltro) (response administraciondtos.ResponsePaises, erro error) {
+	entities, erro := s.repository.GetPaisesRepository(filtro)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntities(entities)
+	return
+}

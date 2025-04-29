@@ -1,11 +1,17 @@
 package administracion
 
 import (
+	"errors"
+
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
+	"gorm.io/gorm"
 )
 
 type Repository interface {
+	GetPaisesRepository(filtro filtros.PaisFiltro) (paises []entities.Pais, erro error)
 }
 
 func NewAdministracionRepository(conn *database.MySQLClient, util util.UtilService) Repository {
@@ -18,6 +24,29 @@ func NewAdministracionRepository(conn *database.MySQLClient, util util.UtilServi
 type repository struct {
 	SQLClient   *database.MySQLClient
 	utilService util.UtilService
+}
+
+func (r *repository) GetPaisesRepository(filtro filtros.PaisFiltro) (paises []entities.Pais, erro error) {
+	result := r.SQLClient.
+		Model(&entities.Pais{}).
+		Select("id", "nombre").
+		Preload("Provincias", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "nombre", "paises_id").
+				Preload("Localidades", func(db *gorm.DB) *gorm.DB {
+					return db.Select("id", "nombre", "provincias_id")
+				})
+		}).
+		Find(&paises)
+
+	if result.Error != nil {
+		return nil, errors.New("No se encontraron países")
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, errors.New("No se encontraron países")
+	}
+
+	return paises, nil
 }
 
 // func (r *repository) GetMiembrosRepository(filtro filtros.MiembroFiltro) (miembros []entities.Usuario, totalFilas int64, erro error) {
