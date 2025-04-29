@@ -71,9 +71,5 @@ func (r *RequestComunidad) ToEntity() *entities.Comunidad {
 		TipoComunidadId: r.TipoComunidadId,
 		LocalidadesId:   r.LocalidadId,
 	}
-
-	if r.Habilitada != nil {
-		comunidad.Habilitada = *r.Habilitada
-	}
 	return comunidad
 }
