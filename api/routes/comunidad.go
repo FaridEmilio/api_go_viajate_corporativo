@@ -22,6 +22,8 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	app.Post("/update-comunidad", PutComunidad(comunidadService))
 
 	app.Post("/registrar-usuario-comunidad", PostUsuarioComunidad(comunidadService))
+
+	app.Get("/tipo-comunidad", GetTipoComunidad(comunidadService))
 }
 
 // func GetMisComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
@@ -314,6 +316,33 @@ func PutUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Hand
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
 			"message": "usuario comunidad actualizada con exito",
+		})
+	}
+}
+
+func GetTipoComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		var request comunidaddtos.RequestTipoComunidad
+		err := c.QueryParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error en los parámetros enviados",
+			})
+		}
+
+		response, err := comunidadService.GetTipoComunidadService(request)
+
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "No se pudo obtener las comunidades. " + err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Operación de consulta de tipo comunidades exitosa.",
 		})
 	}
 }

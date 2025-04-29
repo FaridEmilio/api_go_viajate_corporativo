@@ -8,15 +8,26 @@ import (
 )
 
 type RequestComunidad struct {
-	ID           uint   `json:"id"`
-	Nombre       string `json:"nombre"`
-	Descripcion  string `json:"descripcion"`
-	CodigoAcceso string `json:"codigo_acceso"`
-	Habilitada   *bool  `json:"habilitada"`
-	FotoPerfil   string `json:"foto_perfil"`
-	Size         int64  `json:"size"`
-	Number       int64  `json:"number"`
-	UsuarioID    int64  `json:"usuario_id"`
+	ID              uint    `json:"id"`
+	Nombre          string  `json:"nombre"`
+	Descripcion     string  `json:"descripcion"`
+	CodigoAcceso    string  `json:"codigo_acceso"`
+	Habilitada      *bool   `json:"habilitada"`
+	FotoPerfil      string  `json:"foto_perfil"`
+	UsuarioID       int64   `json:"usuario_id"`
+	LocalidadId     int64   `json:"localidad_id"`
+	TipoComunidadId int64   `json:"tipo_comunidad_id"`
+	Email           string  `json:"email"`
+	Telefono        string  `json:"telefono"`
+	Cuit            string  `json:"cuit"`
+	WebUrl          string  `json:"web_url"`
+	Calle           string  `json:"calle"`
+	Altura          int     `json:"altura"`
+	NumeroPiso      uint    `json:"numero_piso"`
+	Lat             float32 `json:"lat"`
+	Lng             float32 `json:"lng"`
+	Size            int64   `json:"size"`
+	Number          int64   `json:"number"`
 }
 
 func (r *RequestComunidad) Validate() error {
@@ -28,15 +39,37 @@ func (r *RequestComunidad) Validate() error {
 		return errors.New("el campo 'descripcion' es obligatorio")
 	}
 
+	if strings.TrimSpace(r.Email) == "" {
+		return errors.New("el campo 'email' es obligatorio")
+	}
+
+	if strings.TrimSpace(r.Telefono) == "" {
+		return errors.New("el campo 'telefono' es obligatorio")
+	}
+
+	if strings.TrimSpace(r.Cuit) == "" {
+		return errors.New("el campo 'cuit' es obligatorio")
+	}
 	return nil
 }
 
 func (r *RequestComunidad) ToEntity() *entities.Comunidad {
 	comunidad := &entities.Comunidad{
-		Nombre:       r.Nombre,
-		Descripcion:  r.Descripcion,
-		CodigoAcceso: r.CodigoAcceso,
-		FotoPerfil:   r.FotoPerfil,
+		Nombre:          r.Nombre,
+		Descripcion:     r.Descripcion,
+		CodigoAcceso:    r.CodigoAcceso,
+		FotoPerfil:      r.FotoPerfil,
+		Email:           r.Email,
+		Telefono:        r.Telefono,
+		Cuit:            r.Cuit,
+		WebUrl:          r.WebUrl,
+		Calle:           r.Calle,
+		Altura:          r.Altura,
+		NumeroPiso:      r.NumeroPiso,
+		Lat:             r.Lat,
+		Lng:             r.Lng,
+		TipoComunidadId: r.TipoComunidadId,
+		LocalidadId:     r.LocalidadId,
 	}
 
 	if r.Habilitada != nil {

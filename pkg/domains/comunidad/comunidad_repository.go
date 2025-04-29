@@ -17,6 +17,7 @@ type ComunidadRepository interface {
 	PostUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
 	GetUsuarioComunidadRepository(request comunidaddtos.RequestAltaMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error)
 	UpdateUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
+	GetTipoComunidadRepository(request comunidaddtos.RequestTipoComunidad) (tipocomunidad []entities.TipoComunidad, total int64, erro error)
 	// CRUD TRAYECTO
 	// PostTrayectoRepository(trayecto entities.Trayecto) error
 	// GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error)
@@ -125,6 +126,29 @@ func (r *comunidadRepository) UpdateUsuarioComunidadRepository(usuariocomunidad 
 	err := r.SqlClient.Save(&usuariocomunidad).Error
 	if err != nil {
 		erro = errors.New("no se pudo actualizar usuario comunidades")
+		return
+	}
+	return
+}
+
+func (r *comunidadRepository) GetTipoComunidadRepository(request comunidaddtos.RequestTipoComunidad) (tipocomunidad []entities.TipoComunidad, total int64, erro error) {
+	resp := r.SqlClient.Model(&entities.TipoComunidad{})
+	if request.Number > 0 && request.Size > 0 {
+
+		resp.Count(&total)
+
+		if resp.Error != nil {
+			erro = fmt.Errorf(ERROR_CARGAR_TOTAL_FILAS)
+		}
+
+		offset := (request.Number - 1) * request.Size
+		resp.Limit(int(request.Size))
+		resp.Offset(int(offset))
+	}
+	resp.Order("tipocomunidad.created_at DESC")
+	resp.Find(&tipocomunidad)
+	if resp.Error != nil {
+		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
 		return
 	}
 	return

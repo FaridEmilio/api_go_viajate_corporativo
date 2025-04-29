@@ -3,12 +3,13 @@ package comunidad
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 	"mime/multipart"
+	"strings"
 	"time"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
@@ -33,6 +34,7 @@ type ComunidadService interface {
 	PutComunidadService(request comunidaddtos.RequestComunidad) (erro error)
 	PostUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
 	PutUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error)
+	GetTipoComunidadService(request comunidaddtos.RequestTipoComunidad) (response comunidaddtos.ResponseTipoComunidades, erro error)
 }
 
 func NewComunidadService(repo ComunidadRepository, util util.UtilService, firebaseRepo storage.FirebaseRemoteRepository) ComunidadService {
@@ -194,6 +196,17 @@ func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestCom
 	if erro != nil {
 		return
 	}
+	requesttipo := comunidaddtos.RequestTipoComunidad{
+		Id: int(request.TipoComunidadId),
+	}
+	tipocomunidad, _, erro := s.repository.GetTipoComunidadRepository(requesttipo)
+	if erro != nil {
+		return
+	}
+	if len(tipocomunidad) < 1 {
+		erro = errors.New("tipo de comunidad inexistente")
+		return
+	}
 	comunidades, _, erro := s.repository.GetComunidadesRepository(request)
 	if erro != nil {
 		return
@@ -243,13 +256,19 @@ func (s *comunidadService) UploadImageToFirebase(file *multipart.FileHeader) (st
 }
 
 func NewUUID() string {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return ""
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const length = 6
+	var result strings.Builder
+
+	for i := 0; i < length; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return ""
+		}
+		result.WriteByte(charset[n.Int64()])
 	}
 
-	return hex.EncodeToString(b)
+	return result.String()
 }
 
 func (s *comunidadService) PutComunidadService(request comunidaddtos.RequestComunidad) (erro error) {
@@ -338,5 +357,19 @@ func (s *comunidadService) PutUsuarioComunidadService(request comunidaddtos.Requ
 
 	// Ahora actualizamos en base de datos
 	erro = s.repository.UpdateUsuarioComunidadRepository(usuariocomunidad[0])
+	return
+}
+
+func (s *comunidadService) GetTipoComunidadService(request comunidaddtos.RequestTipoComunidad) (response comunidaddtos.ResponseTipoComunidades, erro error) {
+	tipocomunidades, total, erro := s.repository.GetTipoComunidadRepository(request)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntitiesTipoComunidad(tipocomunidades)
+
+	if request.Size > 0 && request.Number > 0 {
+		response.Meta = _setPaginacion(uint32(request.Number), uint32(request.Size), total)
+	}
 	return
 }
