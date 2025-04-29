@@ -17,11 +17,10 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	// app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
 
 	//CRUD COMUNIDAD
-	app.Get("/comunidades", GetComunidades(comunidadService))
-	app.Post("/comunidad", PostComunidad(comunidadService))
-	app.Post("/update-comunidad", PutComunidad(comunidadService))
-
-	app.Post("/registrar-usuario-comunidad", PostUsuarioComunidad(comunidadService))
+	app.Get("/comunidades", middlewares.ValidarPermiso("admin.comunidad"), GetComunidades(comunidadService))
+	app.Post("/comunidad", middlewares.ValidarPermiso("admin.comunidad"), PostComunidad(comunidadService))
+	app.Post("/update-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PutComunidad(comunidadService))
+	app.Post("/registrar-usuario-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
 }
 
 // func GetMisComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
