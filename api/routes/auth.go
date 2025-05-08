@@ -16,14 +16,21 @@ func AuthRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager, aut
 	// app.Put("/change-password", middlewares.ValidarPermiso(), ChangePassword(usuarioService))
 	// app.Put("/update", middlewares.ValidarPermiso(), UpdateUsuario(usuarioService))
 
-	// ******** AUTH
+	/* ---------------------------- AUTH ---------------------------- */
 	app.Post("/register", Register(authService))
 	app.Post("/login", Login(authService))
+
+	// app.Get("/user/:id", GetUser(authService))
+	// app.Post("/refresh-token", middlewares.ValidarPermiso(), RefreshToken(authService))
+	// app.Post("/verify-email", VerifyEmail(authService))
+
+	// //Recover Password
+	// app.Post("/restore-password", RestorePassword(viajateService, runEndpoint))
+	// app.Post("/reset-password", ResetPassword(viajateService))
 }
 
 func Login(authService auth.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-
 		var request authdtos.RequestLogin
 		if err := c.BodyParser(&request); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -42,7 +49,7 @@ func Login(authService auth.AuthService) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  true,
 			"data":    data,
-			"message": "Inicio de sesión exitoso",
+			"message": "Sesión iniciada con éxito",
 		})
 	}
 }
@@ -58,29 +65,19 @@ func Register(authService auth.AuthService) fiber.Handler {
 
 		user, err := authService.Register(request)
 		if err != nil {
-			c.Status(fiber.StatusBadRequest)
-			return c.JSON(&fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
 				"message": err.Error(),
 			})
 		}
 
-		// Genera tokens
-		tokens, err := authService.GetTokensService(user)
+		data, err := authService.GetTokensService(user)
 		if err != nil {
-			c.Status(fiber.StatusBadRequest)
-			return c.JSON(&fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
 				"message": err.Error(),
 			})
 		}
-
-		data := authdtos.ResponseLogin{
-			Token:        tokens.AccessToken,
-			RefreshToken: tokens.RefreshToken,
-		}
-
-		data.User.FromEntity(user)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  true,

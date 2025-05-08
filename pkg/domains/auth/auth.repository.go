@@ -54,6 +54,7 @@ func (r *repository) PostUsuarioRepository(user entities.Usuario) (entities.Usua
 
 func (r *repository) FindByEmail(email string) (entities.Usuario, error) {
 	var user entities.Usuario
+
 	err := r.SQLClient.Where("email = ?", email).
 		Preload("Rol", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "rol") // solo el nombre del rol

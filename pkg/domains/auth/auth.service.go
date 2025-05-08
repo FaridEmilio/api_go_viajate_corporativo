@@ -19,7 +19,7 @@ type AuthService interface {
 	Register(request authdtos.RequestNewUser) (userEntity entities.Usuario, erro error)
 	Login(request authdtos.RequestLogin) (response authdtos.ResponseLogin, err error)
 	GetUserService(filter filtros.UsuarioFiltro) (response authdtos.ResponseUsuario, erro error)
-	GetTokensService(user entities.Usuario) (tokenResponse authdtos.TokenResponse, erro error)
+	GetTokensService(user entities.Usuario) (tokenResponse authdtos.ResponseLogin, erro error)
 	//UpdateProfilePictureService(ctx context.Context, userID uint, fileHeader *multipart.FileHeader) (path string, err error)
 	//DeleteProfilePictureService(ctx context.Context, userID uint) (erro error)
 	//ChangePasswordService(userID uint, request usuariosdtos.RequestChangePassword) (erro error)
@@ -55,21 +55,18 @@ func (s *service) Login(request authdtos.RequestLogin) (response authdtos.Respon
 
 	// Verificar la contraseña
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Contraseña), []byte(request.Password)); err != nil {
-		return response, errors.New("contraseña incorrecta, inténtalo de nuevo")
+		return response, errors.New("Contraseña incorrecta, inténtalo de nuevo")
 	}
-	// Genera tokens
-	tokens, err := s.GetTokensService(user)
+	
+	response, err = s.GetTokensService(user)
 	if err != nil {
 		return
 	}
 
-	response.User.FromEntity(user)
-	response.Token = tokens.AccessToken
-	response.RefreshToken = tokens.RefreshToken
 	return
 }
 
-func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdtos.TokenResponse, erro error) {
+func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdtos.ResponseLogin, erro error) {
 	rol := user.Rol.Rol
 	permisos := make([]string, len(user.Rol.Permisos))
 	for i, perm := range user.Rol.Permisos {
@@ -77,11 +74,13 @@ func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdto
 	}
 
 	expiration := time.Now().Add(48 * time.Hour).Unix()
+	userData := authdtos.ResponseUsuario{}
+	userData.FromEntity(user)
+
 	claims := jwt.MapClaims{
-		"iss":  "Viajate",
-		"id":   fmt.Sprintf("%d", user.ID),
-		"user": user.Email,
-		// "inact":    10,
+		"iss":      "Viajate",
+		"sub":      fmt.Sprintf("%d", user.ID),
+		"user":     userData,
 		"exp":      expiration,
 		"rol":      rol,
 		"permisos": permisos,
@@ -93,10 +92,10 @@ func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdto
 		return tokenResponse, fmt.Errorf("no se pudo firmar el token")
 	}
 
-	refreshTokenExpiration := time.Now().Add(30 * 24 * time.Hour)
+	refreshTokenExpiration := time.Now().Add(15 * 24 * time.Hour)
 	refreshTokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "GoAccess",
-		ID:        fmt.Sprintf("%d", user.ID),
+		Issuer:    "Viajate",
+		Subject:   fmt.Sprintf("%d", user.ID),
 		ExpiresAt: jwt.NewNumericDate(time.Unix(refreshTokenExpiration.Unix(), 0)),
 	})
 
@@ -105,7 +104,7 @@ func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdto
 		return tokenResponse, fmt.Errorf("no se pudo generar el refresh token")
 	}
 
-	tokenResponse.AccessToken = signedToken
+	tokenResponse.Token = signedToken
 	tokenResponse.RefreshToken = refreshToken
 	return
 }
@@ -146,7 +145,7 @@ func (s *service) Register(request authdtos.RequestNewUser) (userEntity entities
 	}
 
 	user := request.ToEntity()
-	user.Contraseña = hashedPassword
+	user.Contraseña = string(hashedPassword)
 	user.FechaNacimiento = fechaNacimiento
 
 	userEntity, erro = s.repository.PostUsuarioRepository(user)

@@ -20,7 +20,7 @@ type Usuario struct {
 	CalificacionPromedio float64             `json:"calificacion_promedio"`
 	Terminos             bool                `json:"terminos"`
 	FotoPerfil           string              `json:"foto_perfil"`
-	Contraseña           []byte              `json:"contraseña"`
+	Contraseña           string              `json:"contraseña"`
 	Viajes               []Viaje             `json:"viajes" gorm:"foreignKey:UsuariosID"`
 	Solicitudes          []Solicitud         `json:"solicitudes" gorm:"foreignKey:UsuariosID"`
 	RolesID              int64               `gorm:"foreignKey:RolesID"`
