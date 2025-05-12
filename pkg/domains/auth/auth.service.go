@@ -16,10 +16,14 @@ import (
 )
 
 type AuthService interface {
-	Register(request authdtos.RequestNewUser) (userEntity entities.Usuario, erro error)
-	Login(request authdtos.RequestLogin) (response authdtos.ResponseLogin, err error)
-	GetUserService(filter filtros.UsuarioFiltro) (response authdtos.ResponseUsuario, erro error)
+	RegisterService(request authdtos.RequestNewUser) (response authdtos.ResponseLogin, erro error)
+	LoginService(request authdtos.RequestLogin) (response authdtos.ResponseLogin, erro error)
+	RefreshTokenService(userID uint) (response authdtos.ResponseLogin, erro error)
 	GetTokensService(user entities.Usuario) (tokenResponse authdtos.ResponseLogin, erro error)
+
+	// USUARIO
+	GetUserService(filter filtros.UsuarioFiltro) (response authdtos.ResponseUsuario, erro error)
+
 	//UpdateProfilePictureService(ctx context.Context, userID uint, fileHeader *multipart.FileHeader) (path string, err error)
 	//DeleteProfilePictureService(ctx context.Context, userID uint) (erro error)
 	//ChangePasswordService(userID uint, request usuariosdtos.RequestChangePassword) (erro error)
@@ -40,14 +44,25 @@ func NewAuthService(repo Repository, util util.UtilService) AuthService {
 	}
 }
 
-func (s *service) Login(request authdtos.RequestLogin) (response authdtos.ResponseLogin, err error) {
+func (s *service) LoginService(request authdtos.RequestLogin) (response authdtos.ResponseLogin, erro error) {
 	// Valido request
-	err = request.Validate()
-	if err != nil {
-		return response, err
+	erro = request.Validate()
+	if erro != nil {
+		return
 	}
 
-	// Recupera el usuario por email
+	// Verifico existencia de usuario registrado con email solicitado
+	existsMail, erro := s.repository.GetUserExistsByEmail(request.Email)
+	if erro != nil {
+		return
+	}
+
+	if !existsMail {
+		erro = fmt.Errorf("No existe una cuenta asociada con el correo electrónico proporcionado")
+		return
+	}
+
+	// Recupero el usuario por email
 	user, err := s.repository.FindByEmail(request.Email)
 	if err != nil {
 		return response, errors.New("No pudimos encontrar tu usuario. Por favor, revisa los datos e inténtalo de nuevo")
@@ -57,7 +72,7 @@ func (s *service) Login(request authdtos.RequestLogin) (response authdtos.Respon
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Contraseña), []byte(request.Password)); err != nil {
 		return response, errors.New("Contraseña incorrecta, inténtalo de nuevo")
 	}
-	
+
 	response, err = s.GetTokensService(user)
 	if err != nil {
 		return
@@ -109,7 +124,7 @@ func (s *service) GetTokensService(user entities.Usuario) (tokenResponse authdto
 	return
 }
 
-func (s *service) Register(request authdtos.RequestNewUser) (userEntity entities.Usuario, erro error) {
+func (s *service) RegisterService(request authdtos.RequestNewUser) (response authdtos.ResponseLogin, erro error) {
 	emailValido := commons.IsEmailValid(request.Email)
 	if !emailValido {
 		erro = fmt.Errorf("El correo electrónico ingresado no es válido. Por favor, verifica e intenta nuevamente")
@@ -147,8 +162,7 @@ func (s *service) Register(request authdtos.RequestNewUser) (userEntity entities
 	user := request.ToEntity()
 	user.Contraseña = string(hashedPassword)
 	user.FechaNacimiento = fechaNacimiento
-
-	userEntity, erro = s.repository.PostUsuarioRepository(user)
+	userEntity, erro := s.repository.PostUsuarioRepository(user)
 	if erro != nil {
 		erro = fmt.Errorf("Error al crear usuario: " + erro.Error())
 		return
@@ -169,6 +183,11 @@ func (s *service) Register(request authdtos.RequestNewUser) (userEntity entities
 	// if erro != nil {
 	// 	return
 	// }
+
+	response, err = s.GetTokensService(userEntity)
+	if err != nil {
+		return
+	}
 
 	return
 }
@@ -280,5 +299,24 @@ func (s *service) GetUserService(filter filtros.UsuarioFiltro) (response authdto
 	}
 
 	response.FromEntity(user)
+	return
+}
+
+func (s *service) RefreshTokenService(userID uint) (response authdtos.ResponseLogin, erro error) {
+	if userID < 1 {
+		erro = fmt.Errorf("Usuario no especificado")
+		return
+	}
+
+	user, erro := s.repository.GetUserRepository(filtros.UsuarioFiltro{ID: userID}, nil)
+	if erro != nil {
+		return
+	}
+
+	response, erro = s.GetTokensService(user)
+	if erro != nil {
+		return
+	}
+
 	return
 }
