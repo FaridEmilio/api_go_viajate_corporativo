@@ -291,7 +291,6 @@ func (s *service) RegisterService(request authdtos.RequestNewUser) (response aut
 // 	return
 // }
 
-// GetUserService implements AuthService.
 func (s *service) GetUserService(filter filtros.UsuarioFiltro) (response authdtos.ResponseUsuario, erro error) {
 	user, erro := s.repository.GetUserRepository(filter, nil)
 	if erro != nil {
@@ -308,7 +307,12 @@ func (s *service) RefreshTokenService(userID uint) (response authdtos.ResponseLo
 		return
 	}
 
-	user, erro := s.repository.GetUserRepository(filtros.UsuarioFiltro{ID: userID}, nil)
+	filtro := filtros.UsuarioFiltro{
+		ID:             userID,
+		CargarPermisos: true,
+	}
+
+	user, erro := s.repository.GetUserRepository(filtro, nil)
 	if erro != nil {
 		return
 	}

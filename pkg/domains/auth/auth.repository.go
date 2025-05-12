@@ -154,6 +154,15 @@ func (r *repository) GetUserRepository(filter filtros.UsuarioFiltro, fields []st
 		resp.Where("id = ?", filter.ID)
 	}
 
+	if filter.CargarPermisos {
+		resp.Preload("Rol", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "rol")
+		}).
+			Preload("Rol.Permisos", func(db *gorm.DB) *gorm.DB {
+				return db.Select("permisos.id", "permisos.permiso")
+			})
+	}
+
 	resp.First(&user)
 	if resp.Error != nil {
 		erro = errors.New("user not found")
