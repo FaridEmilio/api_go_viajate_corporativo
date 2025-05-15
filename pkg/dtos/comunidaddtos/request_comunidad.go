@@ -14,7 +14,7 @@ type RequestComunidad struct {
 	CodigoAcceso    string  `json:"codigo_acceso"`
 	Habilitada      *bool   `json:"habilitada"`
 	FotoPerfil      string  `json:"foto_perfil"`
-	UsuarioID       int64   `json:"usuario_id"`
+	UsuariosID       int64   `json:"usuarios_id"`
 	LocalidadId     int64   `json:"localidad_id"`
 	TipoComunidadId int64   `json:"tipo_comunidad_id"`
 	Email           string  `json:"email"`

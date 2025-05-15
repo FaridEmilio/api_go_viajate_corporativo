@@ -8,7 +8,7 @@ import (
 
 type RequestAltaMiembro struct {
 	Codigo      string `json:"codigo"`
-	UsuariosId  uint   `json:"usuarios_id"`
+	UsuariosID  uint   `json:"usuarios_id"`
 	ComunidadId uint   `json:"comunidad_id"`
 	Activo      *bool  `json:"activo"`
 }

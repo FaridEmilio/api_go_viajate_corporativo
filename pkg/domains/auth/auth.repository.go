@@ -163,6 +163,14 @@ func (r *repository) GetUserRepository(filter filtros.UsuarioFiltro, fields []st
 			})
 	}
 
+	// if filter.CargarComunidades {
+	// 	resp.Preload("Comunidades", func(db *gorm.DB) *gorm.DB {
+	// 		return db.Joins("JOIN usuarios_has_comunidades uhc ON uhc.comunidades_id = comunidades.id").
+	// 			Where("uhc.activo = ?", true)
+	// 			//Select(filter.ComunidadSelectFields)
+	// 	})
+	// }
+	resp.Preload("Comunidades")
 	resp.First(&user)
 	if resp.Error != nil {
 		erro = errors.New("user not found")

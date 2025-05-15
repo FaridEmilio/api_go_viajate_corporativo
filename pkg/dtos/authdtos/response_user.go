@@ -1,23 +1,31 @@
 package authdtos
 
-import "github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+import (
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+)
 
 type ResponseUsuario struct {
-	ID                   uint    `json:"id"`
-	Nombre               string  `json:"nombre"`
-	Email                string  `json:"email"`
-	EmailVerified        bool    `json:"email_verified"`
-	Apellido             string  `json:"apellido"`
-	Numero               string  `json:"numero"`
-	Genero               string  `json:"genero"`
-	FechaNacimiento      string  `json:"fecha_nacimiento"`
-	CalificacionPromedio float64 `json:"calificacion_promedio"`
-	FotoPerfil           string  `json:"foto_perfil"`
-	Activo               bool    `json:"activo"`
-	TotalConductor       int64   `json:"total_conductor"`
-	TotalPasajero        int64   `json:"total_pasajero"`
-	//Comunidades          []comunidaddtos.ResponseComunidad `json:"comunidades"`
+	ID                   uint                `json:"id"`
+	Nombre               string              `json:"nombre"`
+	Email                string              `json:"email"`
+	EmailVerified        bool                `json:"email_verified"`
+	Apellido             string              `json:"apellido"`
+	Numero               string              `json:"numero"`
+	Genero               string              `json:"genero"`
+	FechaNacimiento      string              `json:"fecha_nacimiento"`
+	CalificacionPromedio float64             `json:"calificacion_promedio"`
+	FotoPerfil           string              `json:"foto_perfil"`
+	Activo               bool                `json:"activo"`
+	TotalConductor       int64               `json:"total_conductor"`
+	TotalPasajero        int64               `json:"total_pasajero"`
+	Comunidades          []ResponseComunidad `json:"comunidades"`
 	//Reseñas              []ResponseReseña                  `json:"reseñas"`
+}
+
+type ResponseComunidad struct {
+	ID          uint   `json:"id"`
+	Nombre      string `json:"nombre"`
+	Descripcion string `json:"descripcion"`
 }
 
 func (r *ResponseUsuario) FromEntity(entity entities.Usuario) {
@@ -32,4 +40,18 @@ func (r *ResponseUsuario) FromEntity(entity entities.Usuario) {
 	r.CalificacionPromedio = entity.CalificacionPromedio
 	r.FotoPerfil = entity.FotoPerfil
 	r.Activo = entity.Activo
+	r.ToComunidadesResponse(entity.Comunidades)
+}
+
+func (r *ResponseComunidad) ToComunidadResponse(entity entities.Comunidad) {
+	r.ID = entity.ID
+	r.Nombre = entity.Nombre
+	r.Descripcion = entity.Descripcion
+}
+
+func (r *ResponseUsuario) ToComunidadesResponse(comunidades []entities.Comunidad) {
+	r.Comunidades = make([]ResponseComunidad, len(comunidades))
+	for i, entity := range comunidades {
+		r.Comunidades[i].ToComunidadResponse(entity)
+	}
 }

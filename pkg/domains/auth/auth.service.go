@@ -63,18 +63,25 @@ func (s *service) LoginService(request authdtos.RequestLogin) (response authdtos
 	}
 
 	// Recupero el usuario por email
-	user, err := s.repository.FindByEmail(request.Email)
-	if err != nil {
+	filtro := filtros.UsuarioFiltro{
+		Email: request.Email,
+		CargarPermisos: true,
+		CargarComunidades: true,
+		ComunidadSelectFields: []string{"id", "nombre", "foto_perfil"},
+	}
+
+	user, erro := s.repository.GetUserRepository(filtro, nil)
+	if erro != nil {
 		return response, errors.New("No pudimos encontrar tu usuario. Por favor, revisa los datos e inténtalo de nuevo")
 	}
 
 	// Verificar la contraseña
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Contraseña), []byte(request.Password)); err != nil {
+	if erro := bcrypt.CompareHashAndPassword([]byte(user.Contraseña), []byte(request.Password)); erro != nil {
 		return response, errors.New("Contraseña incorrecta, inténtalo de nuevo")
 	}
 
-	response, err = s.GetTokensService(user)
-	if err != nil {
+	response, erro = s.GetTokensService(user)
+	if erro != nil {
 		return
 	}
 

@@ -30,3 +30,7 @@ type Usuario struct {
 	Vehiculos            []Vehiculo          `json:"vehiculos" gorm:"foreignKey:UsuariosID"`
 	Comunidades          []Comunidad         `gorm:"many2many:usuarios_has_comunidades;"` // Relación de muchos a muchos
 }
+
+func (Usuario) TableName() string {
+	return "usuarios"
+}

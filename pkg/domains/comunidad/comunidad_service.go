@@ -304,7 +304,7 @@ func (s *comunidadService) PostUsuarioComunidadService(request comunidaddtos.Req
 		erro = errors.New("debe proporcionar un codigo de comunidad")
 		return
 	}
-	if request.UsuariosId < 1 {
+	if request.UsuariosID < 1 {
 		erro = errors.New("debe proporcionar un usuario")
 		return
 	}
@@ -325,8 +325,8 @@ func (s *comunidadService) PostUsuarioComunidadService(request comunidaddtos.Req
 	}
 
 	entity := entities.UsuariosHasComunidades{
-		ComunidadesId: comunidades[0].ID,
-		UsuariosId:    request.UsuariosId,
+		ComunidadesID: comunidades[0].ID,
+		UsuariosID:    request.UsuariosID,
 	}
 
 	erro = s.repository.PostUsuarioComunidadRepository(entity)

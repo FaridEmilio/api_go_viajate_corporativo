@@ -117,7 +117,7 @@ func (r *comunidadRepository) UpdateComunidadRepository(comunidad entities.Comun
 }
 
 func (r *comunidadRepository) GetUsuarioComunidadRepository(request comunidaddtos.RequestAltaMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error) {
-	resp := r.SqlClient.Model(&entities.Comunidad{}).Where("comunidades_id = ? AND usuarios_id = ?", request.ComunidadId, request.UsuariosId).Find(&usuariocomunidad)
+	resp := r.SqlClient.Model(&entities.Comunidad{}).Where("comunidades_id = ? AND usuarios_id = ?", request.ComunidadId, request.UsuariosID).Find(&usuariocomunidad)
 	if resp.Error != nil {
 		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
 		return
