@@ -22,7 +22,7 @@ type Comunidad struct {
 	NumeroPiso      uint          `json:"numero_piso"`
 	Lat             float64       `json:"lat"`
 	Lng             float64       `json:"lng"`
-	Usuarios        []Usuario     `gorm:"many2many:usuarios_has_comunidades;"` // Relación de muchos a muchos
+	Usuarios        []*Usuario    `gorm:"many2many:usuarios_has_comunidades;joinForeignKey:ComunidadesID;joinReferences:UsuariosID"` // Relación de muchos a muchos
 	Localidad       Localidad     `gorm:"foreignKey:LocalidadesId"`
 	TipoComunidad   TipoComunidad `gorm:"foreignKey:TipoComunidadId"`
 }

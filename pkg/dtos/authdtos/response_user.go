@@ -49,9 +49,9 @@ func (r *ResponseComunidad) ToComunidadResponse(entity entities.Comunidad) {
 	r.Descripcion = entity.Descripcion
 }
 
-func (r *ResponseUsuario) ToComunidadesResponse(comunidades []entities.Comunidad) {
+func (r *ResponseUsuario) ToComunidadesResponse(comunidades []*entities.Comunidad) {
 	r.Comunidades = make([]ResponseComunidad, len(comunidades))
 	for i, entity := range comunidades {
-		r.Comunidades[i].ToComunidadResponse(entity)
+		r.Comunidades[i].ToComunidadResponse(*entity)
 	}
 }
