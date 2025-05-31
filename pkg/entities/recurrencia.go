@@ -20,3 +20,7 @@ const (
 	Sabado    EnumDia = "Sábado"
 	Domingo   EnumDia = "Domingo"
 )
+
+func (Recurrencia) TableName() string {
+	return "recurrencias"
+}

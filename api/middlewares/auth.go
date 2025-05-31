@@ -48,8 +48,8 @@ func (m *MiddlewareManager) ValidarPermiso(scope string) func(c *fiber.Ctx) erro
 			return fiber.NewError(fiber.StatusUnauthorized, "Claims inválidos en el token")
 		}
 
-		// Obtener el ID del usuario desde "id"
-		idStr, ok := claims["id"].(string)
+		// Obtener el ID del usuario desde "sub"
+		idStr, ok := claims["sub"].(string)
 		if !ok {
 			return fiber.NewError(fiber.StatusUnauthorized, "ID de usuario no válido en el token")
 		}

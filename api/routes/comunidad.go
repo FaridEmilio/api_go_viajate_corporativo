@@ -20,7 +20,7 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	app.Get("/tipo-comunidad", middlewares.ValidarPermiso("admin.comunidad"), GetTipoComunidad(comunidadService))
 
 	// CRUD TRAYECTO
-	// app.Post("/:comunidad/new-route", PostRoute(comunidadService))
+	app.Post("/:comunidad/route", middlewares.ValidarPermiso("crud.route"), PostRoute(comunidadService))
 	// app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
 }
 
@@ -224,53 +224,29 @@ func GetTipoComunidad(comunidadService comunidad.ComunidadService) fiber.Handler
 // 	}
 // }
 
-// // CRUD TRAYECTO
-// func PostRoute(comunidadService comunidad.ComunidadService) fiber.Handler {
-// 	return func(c *fiber.Ctx) error {
-// 		user := c.Locals("user").(viajatedtos.ResponseUsuario)
-// 		if user.ID == 0 {
-// 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-// 				"status":  false,
-// 				"message": "No se pudo obtener el id del usuario loggeado",
-// 			})
-// 		}
+// CRUD TRAYECTO
+func PostRoute(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request comunidaddtos.RequestTrayecto
+		if err := c.BodyParser(&request); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
 
-// 		// Obtener el comunidad_id desde el path parameter
-// 		comunidadID := c.Params("comunidad_id")
-// 		if comunidadID == "" {
-// 			return fiber.NewError(fiber.StatusBadRequest, "Debe proporcionar un ID de comunidad válido")
-// 		}
-// 		comunidad_id, err := strconv.Atoi(comunidadID)
-// 		if err != nil || comunidad_id <= 0 {
-// 			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener la comunidad solicitada")
-// 		}
-
-// 		var request comunidaddtos.RequestTrayecto
-// 		err = c.BodyParser(&request)
-// 		if err != nil {
-// 			logs.Error(err)
-// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 				"error": "Error al analizar la solicitud",
-// 			})
-// 		}
-
-// 		// Obtengo el ID del usuario creador del trayecto
-// 		request.UsuariosID = user.ID
-// 		request.ComunidadesID = uint(comunidad_id)
-// 		err = comunidadService.PostTrayectoService(request)
-
-// 		if err != nil {
-// 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-// 				"status":  false,
-// 				"message": err.Error(),
-// 			})
-// 		}
-// 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-// 			"status":  true,
-// 			"message": "Trayecto creado con éxito",
-// 		})
-// 	}
-// }
+		err := comunidadService.PostTrayectoService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"message": "Trayecto creado con éxito",
+		})
+	}
+}
 
 // func GetRoutes(comunidadService comunidad.ComunidadService) fiber.Handler {
 // 	return func(c *fiber.Ctx) error {

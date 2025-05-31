@@ -24,7 +24,7 @@ type ComunidadService interface {
 	//GetMisComunidadesService(filtro filtros.ComunidadFiltro) (response comunidaddtos.ResponseComunidades, erro error)
 
 	// CRUD TRAYECTO
-	// PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error)
+	PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error)
 	// GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error)
 
 	// // Alta de un miembro en una comunidad
@@ -139,26 +139,21 @@ func _setPaginacion(number uint32, size uint32, total int64) (meta dtos.Meta) {
 // 	return
 // }
 
-// func (s *comunidadService) PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error) {
+func (s *comunidadService) PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error) {
 
-// 	erro = request.Validate()
-// 	if erro != nil {
-// 		return
-// 	}
+	// erro = request.Validate()
+	// if erro != nil {
+	// 	return
+	// }
 
-// 	trayecto := request.ToEntity()
+	trayecto := request.ToEntity()
+	erro = s.repository.PostTrayectoRepository(trayecto)
+	if erro != nil {
+		return
+	}
 
-// 	// genero un identificador unico universal al trayecto
-// 	uuid := s.commons.NewUUID()
-// 	trayecto.Uuid = uuid
-
-// 	erro = s.repository.PostTrayectoRepository(trayecto)
-// 	if erro != nil {
-// 		return
-// 	}
-
-// 	return
-// }
+	return
+}
 
 // // CRUD TRAYECTO
 // func (s *comunidadService) GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error) {

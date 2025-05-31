@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
@@ -20,7 +21,7 @@ type ComunidadRepository interface {
 	UpdateUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
 	GetTipoComunidadRepository(request comunidaddtos.RequestTipoComunidad) (tipocomunidad []entities.TipoComunidad, total int64, erro error)
 	// CRUD TRAYECTO
-	// PostTrayectoRepository(trayecto entities.Trayecto) error
+	PostTrayectoRepository(trayecto entities.Trayecto) error
 	// GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error)
 	// UpdateTrayectoRepository(id uint, updateFields map[string]interface{}) (erro error)
 
@@ -169,38 +170,37 @@ func (r *comunidadRepository) GetTipoComunidadRepository(request comunidaddtos.R
 	return
 }
 
-// func (r *comunidadRepository) PostTrayectoRepository(trayecto entities.Trayecto) error {
-// 	return r.SqlClient.Transaction(func(tx *gorm.DB) error {
+func (r *comunidadRepository) PostTrayectoRepository(trayecto entities.Trayecto) error {
+	return r.SqlClient.Transaction(func(tx *gorm.DB) error {
+		// 1. Crear el Trayecto 
+		if err := tx.Create(&trayecto).Error; err != nil {
+			logs.Info(err)
+			return errors.New("error al crear el trayecto")
+		}
 
-// 		// 1. Crear el Trayecto (cabecera)
-// 		if err := tx.Create(&trayecto).Error; err != nil {
-// 			logs.Info(err)
-// 			return errors.New("error al guardar el trayecto")
-// 		}
+		// // 2. Crear el TrayectoDetalle (detalle) asociado al Trayecto
+		// // Si el TrayectoDetalle está anidado dentro de Trayecto, GORM lo guardará automáticamente
+		// if err := tx.Create(&trayecto.Detalles).Error; err != nil {
+		// 	logs.Info(err)
+		// 	return errors.New("error al guardar el detalle del trayecto")
+		// }
 
-// 		// // 2. Crear el TrayectoDetalle (detalle) asociado al Trayecto
-// 		// // Si el TrayectoDetalle está anidado dentro de Trayecto, GORM lo guardará automáticamente
-// 		// if err := tx.Create(&trayecto.Detalles).Error; err != nil {
-// 		// 	logs.Info(err)
-// 		// 	return errors.New("error al guardar el detalle del trayecto")
-// 		// }
+		// // 3. Crear las rutinas asociadas al trayecto
+		// // Aseguramos que las rutinas están asociadas correctamente al trayecto antes de la inserción
+		// for _, rutina := range trayecto.Rutinas {
+		// 	rutina.TrayectosID = trayecto.ID
+		// }
 
-// 		// // 3. Crear las rutinas asociadas al trayecto
-// 		// // Aseguramos que las rutinas están asociadas correctamente al trayecto antes de la inserción
-// 		// for _, rutina := range trayecto.Rutinas {
-// 		// 	rutina.TrayectosID = trayecto.ID
-// 		// }
+		// // Insertamos las rutinas asociadas al trayecto
+		// if err := tx.CreateInBatches(&trayecto.Rutinas, 10).Error; err != nil {
+		// 	logs.Info(err)
+		// 	return errors.New("error al guardar las rutinas asociadas al trayecto")
+		// }
 
-// 		// // Insertamos las rutinas asociadas al trayecto
-// 		// if err := tx.CreateInBatches(&trayecto.Rutinas, 10).Error; err != nil {
-// 		// 	logs.Info(err)
-// 		// 	return errors.New("error al guardar las rutinas asociadas al trayecto")
-// 		// }
-
-// 		// Si todo fue exitoso, confirmamos la transacción
-// 		return nil
-// 	})
-// }
+ 		// Si todo fue exitoso, confirmamos la transacción
+ 		return nil
+ 	})
+ }
 
 // func (r *comunidadRepository) GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error) {
 

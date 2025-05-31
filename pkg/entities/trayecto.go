@@ -7,6 +7,7 @@ type Trayecto struct {
 	Alias         string
 	Descripcion   string
 	Precio        int
+	Activo        bool
 	OnlyStudents  bool
 	OnlyWomen     bool
 	VehiculosID   uint
