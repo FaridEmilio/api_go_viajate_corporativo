@@ -35,6 +35,11 @@ type ComunidadService interface {
 	PostUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
 	PutUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error)
 	GetTipoComunidadService(request comunidaddtos.RequestTipoComunidad) (response comunidaddtos.ResponseTipoComunidades, erro error)
+
+	// VEHICULOS
+	GetMarcasService() (response comunidaddtos.ResponseMarcas, erro error)
+	PostVehiculoService(request comunidaddtos.RequestVehiculo) (response comunidaddtos.ResponseVehiculo, erro error)
+	GetMisVehiculosService(userID uint) (response comunidaddtos.ResponseVehiculos, erro error)
 }
 
 func NewComunidadService(repo ComunidadRepository, util util.UtilService, firebaseRepo storage.FirebaseRemoteRepository) ComunidadService {
@@ -366,5 +371,47 @@ func (s *comunidadService) GetTipoComunidadService(request comunidaddtos.Request
 	if request.Size > 0 && request.Number > 0 {
 		response.Meta = _setPaginacion(uint32(request.Number), uint32(request.Size), total)
 	}
+	return
+}
+
+func (s *comunidadService) GetMarcasService() (response comunidaddtos.ResponseMarcas, erro error) {
+	marcas, erro := s.repository.GetMarcasRepository()
+	if erro != nil {
+		return
+	}
+
+	response.ToResponseMarcas(marcas)
+	return
+}
+
+func (s *comunidadService) GetMisVehiculosService(userID uint) (response comunidaddtos.ResponseVehiculos, erro error) {
+	if userID < 1 {
+		erro = fmt.Errorf("Usuario no encontrado")
+		return
+	}
+
+	vehiculos, erro := s.repository.GetMisVehiculosRepository(userID)
+	if erro != nil {
+		return
+	}
+
+	response.ToResponseVehiculos(vehiculos)
+	return
+}
+
+func (s *comunidadService) PostVehiculoService(request comunidaddtos.RequestVehiculo) (response comunidaddtos.ResponseVehiculo, erro error) {
+	erro = request.Validate()
+	if erro != nil {
+		return
+	}
+
+	request.FormatVehiculoRequest()
+	entity := request.ToEntity()
+	vehiculo, erro := s.repository.PostVehiculoRepository(entity)
+	if erro != nil {
+		return
+	}
+
+	response.ToResponseVehiculo(vehiculo)
 	return
 }

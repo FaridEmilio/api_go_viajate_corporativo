@@ -25,6 +25,11 @@ type ComunidadRepository interface {
 	// GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error)
 	// UpdateTrayectoRepository(id uint, updateFields map[string]interface{}) (erro error)
 
+	// VEHICULOS
+	GetMarcasRepository() (marcas []entities.Marca, erro error)
+	PostVehiculoRepository(vehiculo entities.Vehiculo) (entities.Vehiculo, error)
+	GetMisVehiculosRepository(userID uint) (vehiculos []entities.Vehiculo, erro error)
+
 	GetDB() (db *database.MySQLClient)
 }
 
@@ -172,7 +177,7 @@ func (r *comunidadRepository) GetTipoComunidadRepository(request comunidaddtos.R
 
 func (r *comunidadRepository) PostTrayectoRepository(trayecto entities.Trayecto) error {
 	return r.SqlClient.Transaction(func(tx *gorm.DB) error {
-		// 1. Crear el Trayecto 
+		// 1. Crear el Trayecto
 		if err := tx.Create(&trayecto).Error; err != nil {
 			logs.Info(err)
 			return errors.New("error al crear el trayecto")
@@ -197,10 +202,10 @@ func (r *comunidadRepository) PostTrayectoRepository(trayecto entities.Trayecto)
 		// 	return errors.New("error al guardar las rutinas asociadas al trayecto")
 		// }
 
- 		// Si todo fue exitoso, confirmamos la transacción
- 		return nil
- 	})
- }
+		// Si todo fue exitoso, confirmamos la transacción
+		return nil
+	})
+}
 
 // func (r *comunidadRepository) GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error) {
 
@@ -260,3 +265,47 @@ func (r *comunidadRepository) PostTrayectoRepository(trayecto entities.Trayecto)
 // 	}
 // 	return
 // }
+
+func (r *comunidadRepository) GetMarcasRepository() (marcas []entities.Marca, erro error) {
+	resp := r.SqlClient.Model(&entities.Marca{}).
+		Order("marca ASC").
+		Find(&marcas)
+	if resp.Error != nil {
+		return nil, fmt.Errorf("error al obtener marcas")
+	}
+	if resp.RowsAffected == 0 {
+		return nil, fmt.Errorf("error al obtener marcas")
+	}
+
+	return
+}
+
+func (r *comunidadRepository) GetMisVehiculosRepository(userID uint) (vehiculos []entities.Vehiculo, erro error) {
+	resp := r.SqlClient.Model(&entities.Vehiculo{}).
+		Where("usuarios_id = ?", userID).
+		Preload("Marca").
+		Order("vehiculos.created_at DESC").
+		Find(&vehiculos)
+
+	if resp.Error != nil {
+		return nil, fmt.Errorf("error al buscar tus vehiculos")
+	}
+
+	if resp.RowsAffected == 0 {
+		return nil, fmt.Errorf("sin vehiculos guardados")
+	}
+
+	return
+}
+
+func (r *comunidadRepository) PostVehiculoRepository(vehiculo entities.Vehiculo) (entities.Vehiculo, error) {
+	if err := r.SqlClient.Create(&vehiculo).Error; err != nil {
+		return entities.Vehiculo{}, fmt.Errorf("error al crear vehiculo")
+	}
+
+	if err := r.SqlClient.Preload("Marca").First(&vehiculo, vehiculo.ID).Error; err != nil {
+		return entities.Vehiculo{}, fmt.Errorf("error al cargar marca del vehiculo")
+	}
+
+	return vehiculo, nil
+}

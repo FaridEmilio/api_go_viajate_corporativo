@@ -6,6 +6,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/authdtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/gofiber/fiber/v2"
 )
@@ -22,6 +23,11 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	// CRUD TRAYECTO
 	app.Post("/:comunidad/route", middlewares.ValidarPermiso("crud.route"), PostRoute(comunidadService))
 	// app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
+
+	// CRUD VEHICULO
+	app.Post("/vehiculo", middlewares.ValidarPermiso("crud.vehiculo"), PostVehiculo(comunidadService))
+	app.Get("/marcas", middlewares.ValidarPermiso("crud.vehiculo"), GetMarcas(comunidadService))
+	app.Get("/mis-vehiculos", middlewares.ValidarPermiso("crud.vehiculo"), GetMisVehiculos(comunidadService))
 }
 
 func GetComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
@@ -320,3 +326,68 @@ func PostRoute(comunidadService comunidad.ComunidadService) fiber.Handler {
 // 		})
 // 	}
 // }
+
+func PostVehiculo(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request comunidaddtos.RequestVehiculo
+		err := c.BodyParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
+
+		userID := c.Locals("user").(authdtos.ResponseUsuario).ID
+		request.UsuariosID = userID
+		resp, err := comunidadService.PostVehiculoService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "Error al guardar vehículo. " + err.Error(),
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    resp,
+			"message": "Vehículo guardado con éxito",
+		})
+	}
+}
+
+func GetMisVehiculos(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := c.Locals("user").(authdtos.ResponseUsuario).ID
+		response, err := comunidadService.GetMisVehiculosService(userID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "¡Ups! No encontramos vehículos en tu lista. Añade tu primer vehículo para comenzar",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Vehiculos obtenidos con éxito",
+		})
+	}
+}
+
+func GetMarcas(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		response, err := comunidadService.GetMarcasService()
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "Error al obtener marcas",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Marcas obtenidas con éxito",
+		})
+	}
+}
