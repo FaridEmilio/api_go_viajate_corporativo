@@ -25,6 +25,7 @@ type Comunidad struct {
 	Usuarios        []*Usuario    `gorm:"many2many:usuarios_has_comunidades;joinForeignKey:ComunidadesID;joinReferences:UsuariosID"` // Relación de muchos a muchos
 	Localidad       Localidad     `gorm:"foreignKey:LocalidadesId"`
 	TipoComunidad   TipoComunidad `gorm:"foreignKey:TipoComunidadId"`
+	Trayectos       []*Trayecto   `gorm:"foreignKey:ComunidadesID"`
 }
 
 func (Comunidad) TableName() string {

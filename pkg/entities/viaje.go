@@ -21,7 +21,6 @@ type Viaje struct {
 	Equipaje    bool        `json:"equipaje"`
 	Descripcion string      `json:"descripcion"`
 	Usuario     Usuario     `json:"usuario" gorm:"foreignKey:UsuariosID"`
-	Ruta        Ruta        `json:"ruta" gorm:"foreignKey:RutasID"`
 	Estado      Estado      `json:"estado" gorm:"foreignKey:EstadosID"`
 	Vehiculo    Vehiculo    `json:"vehiculo" gorm:"foreignKey:VehiculosID"`
 	Solicitudes []Solicitud `json:"solicitudes" gorm:"foreignKey:ViajesID"`
