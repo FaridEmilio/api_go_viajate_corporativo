@@ -9,6 +9,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/comunidad"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ type ComunidadRepository interface {
 	GetTipoComunidadRepository(request comunidaddtos.RequestTipoComunidad) (tipocomunidad []entities.TipoComunidad, total int64, erro error)
 	// CRUD TRAYECTO
 	PostTrayectoRepository(trayecto entities.Trayecto) error
-	// GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error)
+	GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []entities.Trayecto, totalFilas int64, erro error)
 	// UpdateTrayectoRepository(id uint, updateFields map[string]interface{}) (erro error)
 
 	// VEHICULOS
@@ -207,55 +208,43 @@ func (r *comunidadRepository) PostTrayectoRepository(trayecto entities.Trayecto)
 	})
 }
 
-// func (r *comunidadRepository) GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []*entities.Trayecto, totalFilas int64, erro error) {
+func (r *comunidadRepository) GetTrayectosRepository(filtro filtros.TrayectoFiltro) (trayectos []entities.Trayecto, totalFilas int64, erro error) {
+	resp := r.SqlClient.Model(&entities.Trayecto{})
 
-// 	resp := r.SqlClient.Model(&entities.Trayecto{})
+	if filtro.ID > 0 {
+		resp.Where("id = ?", filtro.ID).Limit(1)
+	}
 
-// 	if filtro.ID > 0 {
-// 		resp.Where("id = ?", filtro.ID).Limit(1)
-// 	}
+	if filtro.ComunidadID > 0 {
+		resp.Where("comunidades_id = ?", filtro.ComunidadID)
+	}
 
-// 	if filtro.ComunidadID > 0 {
-// 		resp.Where("comunidades_id = ?", filtro.ComunidadID)
-// 	}
+	resp.Preload("Frecuencia")
+	resp.Preload("Vehiculo.Usuario")
+	resp.Preload("Vehiculo.Marca")
+	resp.Preload("Stops.Address")
+	resp.Preload("Recurrencias")
+	resp.Order("trayectos.created_at DESC")
 
-// 	if filtro.CargarDetalle {
-// 		resp.Preload("Detalles")
-// 	}
+	// PAGINACIÓN
+	if filtro.Number > 0 && filtro.Size > 0 {
+		resp.Count(&totalFilas)
+		if resp.Error != nil {
+			erro = fmt.Errorf(ERROR_CARGAR_TOTAL_FILAS)
+		}
+		offset := (filtro.Number - 1) * filtro.Size
+		resp.Limit(int(filtro.Size))
+		resp.Offset(int(offset))
+	}
 
-// 	resp.Preload("Rutinas")
-// 	resp.Preload("Usuario")
-// 	resp.Preload("Estado")
-// 	resp.Order("trayectos.created_at DESC")
-
-// 	// PAGINACIÓN
-// 	if filtro.Number > 0 && filtro.Size > 0 {
-// 		resp.Count(&totalFilas)
-// 		if resp.Error != nil {
-// 			erro = fmt.Errorf(ERROR_CARGAR_TOTAL_FILAS)
-// 		}
-// 		offset := (filtro.Number - 1) * filtro.Size
-// 		resp.Limit(int(filtro.Size))
-// 		resp.Offset(int(offset))
-// 	}
-
-// 	resp.Find(&trayectos)
-
-// 	if resp.Error != nil {
-// 		log := entities.Log{
-// 			Tipo:          entities.Error,
-// 			Mensaje:       resp.Error.Error(),
-// 			Funcionalidad: "GetTrayectosRepository",
-// 		}
-// 		if err := r.utilService.CreateLogService(log); err != nil {
-// 			mensaje := fmt.Sprintf("Crear Log: %s. %s", err.Error(), err.Error())
-// 			logs.Error(mensaje)
-// 		}
-// 	} else if resp.RowsAffected <= 0 {
-// 		erro = errors.New("no se encontraron trayectos")
-// 	}
-// 	return
-// }
+	resp.Find(&trayectos)
+	if resp.Error != nil {
+		erro = errors.New("error al buscar trayectos " + resp.Error.Error())
+	} else if resp.RowsAffected <= 0 {
+		erro = errors.New("no se encontraron trayectos")
+	}
+	return
+}
 
 // func (r *comunidadRepository) UpdateTrayectoRepository(id uint, updateFields map[string]interface{}) (erro error) {
 // 	if err := r.SqlClient.Model(&entities.Trayecto{}).

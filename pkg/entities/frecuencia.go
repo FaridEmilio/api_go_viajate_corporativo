@@ -5,3 +5,7 @@ type Frecuencia struct {
 	Tipo        string
 	Descripcion string
 }
+
+func (Frecuencia) TableName() string {
+	return "frecuencias"
+}

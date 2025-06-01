@@ -16,6 +16,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/storage"
 )
 
@@ -25,7 +26,7 @@ type ComunidadService interface {
 
 	// CRUD TRAYECTO
 	PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error)
-	// GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error)
+	GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error)
 
 	// // Alta de un miembro en una comunidad
 	GetComunidadesService(filtro comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error)
@@ -144,6 +145,7 @@ func _setPaginacion(number uint32, size uint32, total int64) (meta dtos.Meta) {
 // 	return
 // }
 
+// CRUD TRAYECTOS
 func (s *comunidadService) PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error) {
 
 	// erro = request.Validate()
@@ -160,21 +162,20 @@ func (s *comunidadService) PostTrayectoService(request comunidaddtos.RequestTray
 	return
 }
 
-// // CRUD TRAYECTO
-// func (s *comunidadService) GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error) {
+func (s *comunidadService) GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error) {
+	// Setear paginacion por default si no se envia
 
-// 	filtro.CargarDetalle = true
-// 	trayectos, total, erro := s.repository.GetTrayectosRepository(filtro)
-// 	if erro != nil {
-// 		return
-// 	}
-// 	if filtro.Number > 0 && filtro.Size > 0 {
-// 		response.Meta = _setPaginacion(filtro.Number, filtro.Size, total)
-// 	}
-// 	response.ToResponseTrayectos(trayectos)
-// 	return
+	trayectos, total, erro := s.repository.GetTrayectosRepository(filtro)
+	if erro != nil {
+		return
+	}
+	if filtro.Number > 0 && filtro.Size > 0 {
+		response.Meta = _setPaginacion(filtro.Number, filtro.Size, total)
+	}
+	response.ToTrayectosResponse(trayectos)
+	return
 
-// }
+}
 
 func (s *comunidadService) GetComunidadesService(request comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error) {
 	comunidades, total, erro := s.repository.GetComunidadesRepository(request)

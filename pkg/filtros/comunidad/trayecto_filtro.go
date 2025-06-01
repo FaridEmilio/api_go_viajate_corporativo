@@ -9,10 +9,4 @@ type TrayectoFiltro struct {
 	DestinationName string
 	FechaInicio     string
 	FechaFin        string
-	Mascostas       bool
-	Equipaje        bool
-	// Carga para preloads
-	CargarDetalle   bool
-	CargarComunidad bool
-	CargarUsuario   bool
 }

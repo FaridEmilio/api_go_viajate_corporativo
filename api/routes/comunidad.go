@@ -2,12 +2,14 @@ package routes
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/authdtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
+	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/comunidad"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -22,7 +24,7 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 
 	// CRUD TRAYECTO
 	app.Post("/:comunidad/route", middlewares.ValidarPermiso("crud.route"), PostRoute(comunidadService))
-	// app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
+	app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
 
 	// CRUD VEHICULO
 	app.Post("/vehiculo", middlewares.ValidarPermiso("crud.vehiculo"), PostVehiculo(comunidadService))
@@ -254,43 +256,46 @@ func PostRoute(comunidadService comunidad.ComunidadService) fiber.Handler {
 	}
 }
 
-// func GetRoutes(comunidadService comunidad.ComunidadService) fiber.Handler {
-// 	return func(c *fiber.Ctx) error {
-// 		// Obtener el comunidad_id desde el path parameter
-// 		comunidadID := c.Params("comunidad_id")
-// 		if comunidadID == "" {
-// 			return fiber.NewError(fiber.StatusBadRequest, "Debe proporcionar un ID de comunidad válido")
-// 		}
-// 		comunidad_id, err := strconv.Atoi(comunidadID)
-// 		if err != nil || comunidad_id <= 0 {
-// 			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener la comunidad solicitada")
-// 		}
+func GetRoutes(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Obtener el comunidad_id desde el path parameter
 
-// 		var request filtros.TrayectoFiltro
-// 		err = c.QueryParser(&request)
-// 		if err != nil {
-// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 				"error": "Error en los parámetros enviados",
-// 			})
-// 		}
+		// TODO agregar esta validacion de comunidad en unm middleware nuevo y que setee en locals el comunidadID
+		//  que saca de path parameter asi no repito cada vez
+		comunidadID := c.Params("comunidad_id")
+		if comunidadID == "" {
+			return fiber.NewError(fiber.StatusBadRequest, "Debe proporcionar un ID de comunidad válido")
+		}
+		comunidad_id, err := strconv.Atoi(comunidadID)
+		if err != nil || comunidad_id <= 0 {
+			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener la comunidad solicitada")
+		}
 
-// 		// Asigno el filtro de comunidad para obtener trayectos
-// 		request.ComunidadID = uint(comunidad_id)
-// 		response, err := comunidadService.GetTrayectosService(request)
-// 		if err != nil {
-// 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-// 				"status":  false,
-// 				"message": "No se pudo obtener mis comunidades. " + err.Error(),
-// 			})
-// 		}
+		var request filtros.TrayectoFiltro
+		err = c.QueryParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error en los parámetros enviados",
+			})
+		}
 
-// 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-// 			"status":  true,
-// 			"data":    response,
-// 			"message": "Operación de consulta de rutinas exitosa",
-// 		})
-// 	}
-// }
+		// Asigno el filtro de comunidad para obtener trayectos
+		request.ComunidadID = uint(comunidad_id)
+		response, err := comunidadService.GetTrayectosService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "No se pudo obtener mis comunidades. " + err.Error(),
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Operación de consulta de rutinas exitosa",
+		})
+	}
+}
 
 // func PostUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 // 	return func(c *fiber.Ctx) error {
