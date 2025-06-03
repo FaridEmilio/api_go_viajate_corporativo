@@ -1,11 +1,13 @@
 package administracion
 
 import (
+	"errors"
 	"math"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/administraciondtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
 )
 
@@ -60,4 +62,45 @@ func (s *service) GetPaisesService(filtro filtros.PaisFiltro) (response administ
 
 	response.FromEntities(entities)
 	return
+}
+
+func (s *service) PutUsuarioHasComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error) {
+	erro = s.repository.UpdateUsuarioHasComunidadRepository(request)
+	if erro != nil {
+		return
+	}
+	return
+}
+
+func (s *service) GetComunidadMembersService(comunidadID uint) (response administraciondtos.ResponseComunidadMembers, erro error) {
+	entities, erro := s.repository.GetComunidadMembersRepository(comunidadID)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntities(entities)
+	return
+}
+
+func (s *service) GetSedesService(comunidadID uint) (response administraciondtos.ResponseSedes, erro error) {
+	entities, erro := s.repository.GetSedesRepository(comunidadID)
+	if erro != nil {
+		return
+	}
+	response.FromEntities(entities)
+	return
+}
+
+func (s *service) CreateSedeService(request administraciondtos.RequestCreateSede) (erro error) {
+	if err := request.Validate(); err != nil {
+		return err
+	}
+	return s.repository.CreateSedeRepository(request)
+}
+
+func (s *service) UpdateSedeActivaService(request administraciondtos.RequestCreateSede) (erro error) {
+	if request.Id == 0 {
+		return errors.New("el id de la sede es obligatorio")
+	}
+	return s.repository.UpdateSedeActivaRepository(request.Id, request.Active)
 }

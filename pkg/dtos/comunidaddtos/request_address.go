@@ -1,6 +1,10 @@
 package comunidaddtos
 
-import "github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+import (
+	"errors"
+
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
+)
 
 type RequestAddress struct {
 	Name             string  `json:"name"`
@@ -28,4 +32,17 @@ func (r *RequestAddress) ToEntity() entities.Address {
 		Country:          r.Country,
 		Url:              r.URL,
 	}
+}
+
+func (r *RequestAddress) Validate() error {
+	if r.StreetAddress == "" {
+		return errors.New("el campo 'street_address' es obligatorio")
+	}
+	if r.City == "" {
+		return errors.New("el campo 'city' es obligatorio")
+	}
+	if r.Country == "" {
+		return errors.New("el campo 'country' es obligatorio")
+	}
+	return nil
 }

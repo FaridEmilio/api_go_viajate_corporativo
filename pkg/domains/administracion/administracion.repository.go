@@ -5,6 +5,8 @@ import (
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/internal/database"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/administraciondtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
 	"gorm.io/gorm"
@@ -12,6 +14,11 @@ import (
 
 type Repository interface {
 	GetPaisesRepository(filtro filtros.PaisFiltro) (paises []entities.Pais, erro error)
+	UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestAltaMiembro) (erro error)
+	GetComunidadMembersRepository(comunidadId uint) (usuariosHasComunidad []entities.UsuariosHasComunidades, err error)
+	GetSedesRepository(comunidadID uint) (sedes []entities.Sede, err error)
+	CreateSedeRepository(request administraciondtos.RequestCreateSede) (erro error)
+	UpdateSedeActivaRepository(sedeID uint, activo bool) (erro error)
 }
 
 func NewAdministracionRepository(conn *database.MySQLClient, util util.UtilService) Repository {
@@ -47,6 +54,66 @@ func (r *repository) GetPaisesRepository(filtro filtros.PaisFiltro) (paises []en
 	}
 
 	return paises, nil
+}
+
+func (r *repository) UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestAltaMiembro) error {
+	entity := entities.UsuariosHasComunidades{
+		UsuariosID:    request.UsuariosID,
+		ComunidadesID: request.ComunidadId,
+	}
+
+	result := r.SQLClient.Model(&entity).
+		Where("usuarios_id = ? AND comunidades_id = ?", request.UsuariosID, request.ComunidadId).
+		Update("activo", false)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		erro := errors.New("no se encontró relación usuario-comunidad para actualizar")
+		return erro
+	}
+
+	return nil
+}
+
+func (r *repository) GetComunidadMembersRepository(comunidadId uint) (usuariosHasComunidad []entities.UsuariosHasComunidades, err error) {
+	err = r.SQLClient.
+		Preload("Comunidad").
+		Preload("Usuario").
+		Where("comunidades_id = ? AND activo = ?", comunidadId, true).
+		Find(&usuariosHasComunidad).Error
+
+	return
+}
+
+func (r *repository) GetSedesRepository(comunidadID uint) (sedes []entities.Sede, err error) {
+	err = r.SQLClient.Where("comunidades_id = ? AND active = ?", comunidadID, true).
+		Preload("Address").
+		Find(&sedes).Error
+
+	return sedes, err
+}
+
+func (r *repository) CreateSedeRepository(request administraciondtos.RequestCreateSede) error {
+	sede, address := request.ToEntity()
+
+	return r.SQLClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&address).Error; err != nil {
+			return err
+		}
+		sede.AddressesID = address.ID
+		if err := tx.Create(&sede).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+func (r *repository) UpdateSedeActivaRepository(sedeID uint, activo bool) (erro error) {
+	return r.SQLClient.Model(&entities.Sede{}).
+		Where("id = ?", sedeID).
+		Update("activo", activo).Error
 }
 
 // func (r *repository) GetMiembrosRepository(filtro filtros.MiembroFiltro) (miembros []entities.Usuario, totalFilas int64, erro error) {
