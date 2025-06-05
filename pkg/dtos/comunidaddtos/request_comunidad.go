@@ -14,7 +14,7 @@ type RequestComunidad struct {
 	CodigoAcceso    string  `json:"codigo_acceso"`
 	Habilitada      *bool   `json:"habilitada"`
 	FotoPerfil      string  `json:"foto_perfil"`
-	UsuariosID       int64   `json:"usuarios_id"`
+	UsuariosID      int64   `json:"usuarios_id"`
 	LocalidadId     int64   `json:"localidad_id"`
 	TipoComunidadId int64   `json:"tipo_comunidad_id"`
 	Email           string  `json:"email"`
@@ -22,7 +22,7 @@ type RequestComunidad struct {
 	Cuit            string  `json:"cuit"`
 	WebUrl          string  `json:"web_url"`
 	Calle           string  `json:"calle"`
-	Altura          int     `json:"altura"`
+	StreetAddress   string  `json:"street_address"`
 	NumeroPiso      uint    `json:"numero_piso"`
 	Lat             float64 `json:"lat"`
 	Lng             float64 `json:"lng"`
@@ -63,8 +63,7 @@ func (r *RequestComunidad) ToEntity() *entities.Comunidad {
 		Telefono:        r.Telefono,
 		Cuit:            r.Cuit,
 		WebUrl:          r.WebUrl,
-		Calle:           r.Calle,
-		Altura:          r.Altura,
+		StreetAddress:   r.StreetAddress,
 		NumeroPiso:      r.NumeroPiso,
 		Lat:             r.Lat,
 		Lng:             r.Lng,

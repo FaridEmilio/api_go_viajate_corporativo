@@ -8,6 +8,7 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/administraciondtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
+	usuarioFiltros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -18,7 +19,7 @@ func AdministracionRoutes(app fiber.Router, middlewares middlewares.MiddlewareMa
 	app.Put("/expulsar-miembro", PutUsuaroHasComunidad(administracionService))
 
 	// listar todos los miembros de una comunidad
-	app.Get("/comunidad_id", GetComunidadMembers(administracionService))
+	app.Get("/:comunidad_id/members", middlewares.ValidarPermiso("admin.comunidad"), GetComunidadMembers(administracionService))
 
 	// crud sedes con el post con address
 	app.Get("/sedes", GetSedes(administracionService))
@@ -80,19 +81,29 @@ func PutUsuaroHasComunidad(administracionService administracion.AdministracionSe
 
 func GetComunidadMembers(administracionService administracion.AdministracionService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		comunidadID := c.Locals("comunidad").(comunidaddtos.RequestComunidad).ID
+		var request usuarioFiltros.UsuarioFiltro
+		err := c.QueryParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error en los parámetros enviados",
+			})
+		}
+
+		// Asigno el filtro de comunidad para obtener trayectos
+		comunidadID := uint(c.Locals("comunidadID").(int))
+		request.ComunidadID = comunidadID
 		response, err := administracionService.GetComunidadMembersService(comunidadID)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
-				"message": "¡Ups! No encontramos members en la comunidad.",
+				"message": "¡Ups! No encontramos miembros en esta comunidad",
 			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
 			"data":    response,
-			"message": "Members de comunidad obtenidos con éxito",
+			"message": "Miembros obtenidos con éxito",
 		})
 	}
 }

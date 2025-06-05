@@ -17,8 +17,7 @@ type Comunidad struct {
 	Telefono        string        `json:"telefono"`
 	Cuit            string        `json:"cuit"`
 	WebUrl          string        `json:"web_url"`
-	Calle           string        `json:"calle"`
-	Altura          int           `json:"altura"`
+	StreetAddress   string        `json:"street_address"`
 	NumeroPiso      uint          `json:"numero_piso"`
 	Lat             float64       `json:"lat"`
 	Lng             float64       `json:"lng"`

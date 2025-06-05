@@ -25,8 +25,7 @@ type ResponseComunidad struct {
 	Telefono      string  `json:"telefono"`
 	Cuit          string  `json:"cuit"`
 	WebUrl        string  `json:"web_url"`
-	Calle         string  `json:"calle"`
-	Altura        int     `json:"altura"`
+	StreetAddress string  `json:"calle"`
 	NumeroPiso    uint    `json:"numero_piso"`
 	Lat           float64 `json:"lat"`
 	Lng           float64 `json:"lng"`
@@ -47,8 +46,7 @@ func (r *ResponseComunidad) FromEntity(entity entities.Comunidad) {
 	r.Telefono = entity.Telefono
 	r.Cuit = entity.Cuit
 	r.WebUrl = entity.WebUrl
-	r.Calle = entity.Calle
-	r.Altura = entity.Altura
+	r.StreetAddress = entity.StreetAddress
 	r.NumeroPiso = entity.NumeroPiso
 	r.Lat = entity.Lat
 	r.Lng = entity.Lng
