@@ -2,7 +2,6 @@ package routes
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
@@ -18,13 +17,13 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	app.Get("/comunidades", middlewares.ValidarPermiso("admin.comunidad"), GetComunidades(comunidadService))
 	app.Post("/comunidad", middlewares.ValidarPermiso("admin.comunidad"), PostComunidad(comunidadService))
 	app.Post("/update-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PutComunidad(comunidadService))
-	app.Post("/registrar-usuario-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
+	app.Post("/miembro", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
 
 	app.Get("/tipo-comunidad", middlewares.ValidarPermiso("admin.comunidad"), GetTipoComunidad(comunidadService))
 
 	// CRUD TRAYECTO
-	app.Post("/:comunidad/route", middlewares.ValidarPermiso("crud.route"), PostRoute(comunidadService))
-	app.Get("/:comunidad_id/routes", GetRoutes(comunidadService))
+	app.Post("/:comunidad_id/route", middlewares.ValidarPermiso("crud.route"), PostRoute(comunidadService))
+	app.Get("/:comunidad_id/routes", middlewares.ValidarPermiso("crud.route"), GetRoutes(comunidadService))
 
 	// CRUD VEHICULO
 	app.Post("/vehiculo", middlewares.ValidarPermiso("crud.vehiculo"), PostVehiculo(comunidadService))
@@ -136,17 +135,16 @@ func PostUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Han
 			})
 		}
 
-		nombre, err := comunidadService.PostUsuarioComunidadService(request)
+		comunidad, err := comunidadService.PostUsuarioComunidadService(request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
 				"message": err.Error(),
 			})
 		}
-		message := "Usuario registrado en la " + nombre + " con exito"
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
-			"message": message,
+			"message": fmt.Sprintf("¡Todo listo! Tu registro en la comunidad %s ha sido completado con éxito", comunidad),
 		})
 	}
 }
@@ -258,21 +256,8 @@ func PostRoute(comunidadService comunidad.ComunidadService) fiber.Handler {
 
 func GetRoutes(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Obtener el comunidad_id desde el path parameter
-
-		// TODO agregar esta validacion de comunidad en unm middleware nuevo y que setee en locals el comunidadID
-		//  que saca de path parameter asi no repito cada vez
-		comunidadID := c.Params("comunidad_id")
-		if comunidadID == "" {
-			return fiber.NewError(fiber.StatusBadRequest, "Debe proporcionar un ID de comunidad válido")
-		}
-		comunidad_id, err := strconv.Atoi(comunidadID)
-		if err != nil || comunidad_id <= 0 {
-			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener la comunidad solicitada")
-		}
-
 		var request filtros.TrayectoFiltro
-		err = c.QueryParser(&request)
+		err := c.QueryParser(&request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Error en los parámetros enviados",
@@ -280,12 +265,13 @@ func GetRoutes(comunidadService comunidad.ComunidadService) fiber.Handler {
 		}
 
 		// Asigno el filtro de comunidad para obtener trayectos
-		request.ComunidadID = uint(comunidad_id)
+		comunidadID := uint(c.Locals("comunidadID").(int))
+		request.ComunidadID = comunidadID
 		response, err := comunidadService.GetTrayectosService(request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
-				"message": "No se pudo obtener mis comunidades. " + err.Error(),
+				"message": "Parece que no hay trayectos disponibles en este momento. Prueba variar las fechas",
 			})
 		}
 
@@ -296,41 +282,6 @@ func GetRoutes(comunidadService comunidad.ComunidadService) fiber.Handler {
 		})
 	}
 }
-
-// func PostUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
-// 	return func(c *fiber.Ctx) error {
-// 		user := c.Locals("user").(viajatedtos.ResponseUsuario)
-// 		if user.ID == 0 {
-// 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-// 				"status":  false,
-// 				"message": "No se pudo obtener el id del usuario loggeado",
-// 			})
-// 		}
-
-// 		var request comunidaddtos.RequestAltaMiembro
-// 		err := c.BodyParser(&request)
-// 		if err != nil {
-// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 				"error": "Error al analizar la solicitud",
-// 			})
-// 		}
-
-// 		request.UsuariosID = user.ID // Usuario que se quiere matricular
-// 		comunidad, err := comunidadService.PostAltaMiembroService(request)
-// 		if err != nil {
-// 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-// 				"status":  false,
-// 				"message": err.Error(),
-// 			})
-// 		}
-
-// 		message := fmt.Sprintf("¡Todo listo! Tu registro en la comunidad %s ha sido completado con éxito.", comunidad)
-// 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-// 			"status":  true,
-// 			"message": message,
-// 		})
-// 	}
-// }
 
 func PostVehiculo(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {

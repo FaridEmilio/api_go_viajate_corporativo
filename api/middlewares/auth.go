@@ -80,6 +80,20 @@ func (m *MiddlewareManager) ValidarPermiso(scope string) func(c *fiber.Ctx) erro
 			return fiber.NewError(fiber.StatusInternalServerError, "Error al obtener detalles del usuario")
 		}
 
+		// Verifica si el parámetro comunidad_id está presente
+		if comunidadID := c.Params("comunidad_id"); comunidadID != "" {
+			comunidad_id, err := strconv.Atoi(comunidadID)
+			if err != nil || comunidad_id <= 0 {
+				return fiber.NewError(fiber.StatusBadRequest, "ID de comunidad inválido")
+			}
+
+			comunidadMap := ExtraerComunidadesMap(claims)
+			if _, found := comunidadMap[comunidad_id]; !found {
+				return fiber.NewError(fiber.StatusForbidden, "No perteneces a esta comunidad")
+			}
+
+			c.Locals("comunidadID", comunidad_id)
+		}
 		// Establecer los detalles del usuario en el contexto para uso posterior
 		c.Locals("user", user)
 		return c.Next()
@@ -130,4 +144,26 @@ func (m *MiddlewareManager) ValidateToken() func(c *fiber.Ctx) error {
 		c.Locals("user", user)
 		return c.Next()
 	}
+}
+
+func ExtraerComunidadesMap(claims jwt.MapClaims) map[int]struct{} {
+	result := make(map[int]struct{})
+	userRaw, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	comunidadesRaw, ok := userRaw["comunidades"].([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, raw := range comunidadesRaw {
+		if comunidadMap, ok := raw.(map[string]interface{}); ok {
+			if idFloat, ok := comunidadMap["id"].(float64); ok {
+				result[int(idFloat)] = struct{}{}
+			}
+		}
+	}
+	return result
 }
