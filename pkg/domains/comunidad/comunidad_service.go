@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
@@ -197,6 +198,7 @@ func (s *comunidadService) GetComunidadesService(request comunidaddtos.RequestCo
 func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidad, erro error) {
 	erro = request.Validate()
 	if erro != nil {
+		logs.Error(erro)
 		return
 	}
 
