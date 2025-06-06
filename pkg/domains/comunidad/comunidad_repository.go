@@ -108,6 +108,18 @@ func (r *comunidadRepository) PostComunidadRepository(comunidad entities.Comunid
 	if err := r.SqlClient.Create(&comunidad).Error; err != nil {
 		return entities.Comunidad{}, fmt.Errorf("error al crear comunidad")
 	}
+
+	if err := r.SqlClient.Preload("TipoComunidad").Preload("Localidad", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "nombre", "provincias_id").
+			Preload("Provincia", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "nombre", "paises_id").
+					Preload("Pais", func(db *gorm.DB) *gorm.DB {
+						return db.Select("id", "nombre")
+					})
+			})
+	}).First(&comunidad, comunidad.ID).Error; err != nil {
+		return entities.Comunidad{}, fmt.Errorf("error al cargar la localidad")
+	}
 	return comunidad, nil
 }
 
