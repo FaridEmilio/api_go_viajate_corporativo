@@ -242,7 +242,7 @@ func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestCom
 	// Se crea la relación usuario-comunidad
 	usuarioHasComunidad := entities.UsuariosHasComunidades{
 		ComunidadesID: comunidadEntity.ID,
-		UsuariosID:    request.ID,
+		UsuariosID:    uint(request.UsuariosID),
 		Activo:        true,
 	}
 

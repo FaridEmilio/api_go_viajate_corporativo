@@ -2,8 +2,8 @@ package comunidaddtos
 
 import (
 	"errors"
-	"strings"
 
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/commons"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
 
@@ -15,7 +15,7 @@ type RequestComunidad struct {
 	Habilitada      *bool   `json:"habilitada"`
 	FotoPerfil      string  `json:"foto_perfil"`
 	UsuariosID      int64   `json:"usuarios_id"`
-	LocalidadId     int64   `json:"localidad_id"`
+	LocalidadID     int64   `json:"localidad_id"`
 	TipoComunidadId int64   `json:"tipo_comunidad_id"`
 	Email           string  `json:"email"`
 	Telefono        string  `json:"telefono"`
@@ -31,25 +31,26 @@ type RequestComunidad struct {
 }
 
 func (r *RequestComunidad) Validate() error {
-	if strings.TrimSpace(r.Nombre) == "" {
-		return errors.New("el campo 'nombre' es obligatorio")
+	if commons.StringIsEmpty(r.Nombre) {
+		return errors.New("Por favor, ingresa el nombre de la comunidad.")
 	}
 
-	if strings.TrimSpace(r.Descripcion) == "" {
-		return errors.New("el campo 'descripcion' es obligatorio")
+	if commons.StringIsEmpty(r.Descripcion) {
+		return errors.New("Por favor, proporciona una descripción para la comunidad.")
 	}
 
-	if strings.TrimSpace(r.Email) == "" {
-		return errors.New("el campo 'email' es obligatorio")
+	if commons.StringIsEmpty(r.Email) {
+		return errors.New("Por favor, indica un correo electrónico de contacto.")
 	}
 
-	if strings.TrimSpace(r.Telefono) == "" {
-		return errors.New("el campo 'telefono' es obligatorio")
+	if commons.StringIsEmpty(r.Telefono) {
+		return errors.New("Por favor, escribe un número de teléfono válido.")
 	}
 
-	if strings.TrimSpace(r.Cuit) == "" {
-		return errors.New("el campo 'cuit' es obligatorio")
+	if commons.StringIsEmpty(r.Cuit) {
+		return errors.New("Por favor, ingresa el CUIT de la comunidad.")
 	}
+
 	return nil
 }
 
@@ -68,7 +69,7 @@ func (r *RequestComunidad) ToEntity() *entities.Comunidad {
 		Lat:             r.Lat,
 		Lng:             r.Lng,
 		TipoComunidadId: r.TipoComunidadId,
-		LocalidadesId:   r.LocalidadId,
+		LocalidadesId:   r.LocalidadID,
 	}
 	comunidad.Habilitada = true
 	return comunidad
