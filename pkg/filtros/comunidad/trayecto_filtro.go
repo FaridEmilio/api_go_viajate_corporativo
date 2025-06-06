@@ -1,7 +1,9 @@
 package filtros
 
+import "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros"
+
 type TrayectoFiltro struct {
-	Paginacion
+	filtros.Paginacion
 	ID              uint
 	UsuariosID      uint
 	ComunidadID     uint

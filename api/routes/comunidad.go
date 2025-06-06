@@ -15,7 +15,7 @@ import (
 func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager, comunidadService comunidad.ComunidadService, utilService util.UtilService) {
 	//CRUD COMUNIDAD
 	app.Get("/comunidades", middlewares.ValidarPermiso("admin.comunidad"), GetComunidades(comunidadService))
-	app.Post("/comunidad", middlewares.ValidarPermiso("admin.comunidad"), PostComunidad(comunidadService))
+	app.Post("/comunidad", middlewares.ValidarPermiso("create.comunidad"), PostComunidad(comunidadService))
 	app.Post("/update-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PutComunidad(comunidadService))
 	app.Post("/miembro", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
 

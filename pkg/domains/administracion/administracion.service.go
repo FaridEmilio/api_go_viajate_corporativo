@@ -7,8 +7,10 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/administraciondtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/authdtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
+	usuariofiltros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
 )
 
 type service struct {
@@ -72,13 +74,13 @@ func (s *service) PutUsuarioHasComunidadService(request comunidaddtos.RequestAlt
 	return
 }
 
-func (s *service) GetComunidadMembersService(comunidadID uint) (response administraciondtos.ResponseComunidadMembers, erro error) {
-	entities, erro := s.repository.GetComunidadMembersRepository(comunidadID)
+func (s *service) GetMiembrosService(filtro filtros.MiembroFiltro) (response administraciondtos.ResponseMiembros, erro error) {
+	entities, erro := s.repository.GetMiembrosRepository(filtro)
 	if erro != nil {
 		return
 	}
 
-	response.FromEntities(entities)
+	response.ToMiembrosResponse(entities)
 	return
 }
 
@@ -103,4 +105,28 @@ func (s *service) UpdateSedeActivaService(request administraciondtos.RequestCrea
 		return errors.New("el id de la sede es obligatorio")
 	}
 	return s.repository.UpdateSedeActivaRepository(request.Id, request.Active)
+}
+
+func (s *service) GetUsuariosService(filtro usuariofiltros.UsuarioFiltro) (response authdtos.ResponseUsuarios, erro error) {
+	usuarios, total, erro := s.repository.GetUsuariosRepository(filtro)
+	if erro != nil {
+		return
+	}
+
+	if filtro.Size > 0 && filtro.Number > 0 {
+		response.Meta = _setPaginacion(uint32(filtro.Number), uint32(filtro.Size), total)
+	}
+
+	response.ToResponseUsuarios(usuarios)
+	return
+}
+
+func (s *service) GetUsuarioService(filtro usuariofiltros.UsuarioFiltro) (response authdtos.ResponseUsuario, erro error) {
+	user, erro := s.repository.GetUsuarioRepository(filtro)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntity(user)
+	return
 }

@@ -6,9 +6,10 @@ import (
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/administracion"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/administraciondtos"
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/authdtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
 	filtros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/administracion"
-	usuarioFiltros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
+	UsuarioFiltros "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros/usuarios"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,6 +21,7 @@ func AdministracionRoutes(app fiber.Router, middlewares middlewares.MiddlewareMa
 
 	// listar todos los miembros de una comunidad
 	app.Get("/:comunidad_id/members", middlewares.ValidarPermiso("admin.comunidad"), GetComunidadMembers(administracionService))
+	app.Get("/user", middlewares.ValidarPermiso("admin.user.search"), GetUser(administracionService))
 
 	// crud sedes con el post con address
 	app.Get("/sedes", GetSedes(administracionService))
@@ -81,7 +83,7 @@ func PutUsuaroHasComunidad(administracionService administracion.AdministracionSe
 
 func GetComunidadMembers(administracionService administracion.AdministracionService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var request usuarioFiltros.UsuarioFiltro
+		var request filtros.MiembroFiltro
 		err := c.QueryParser(&request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -89,10 +91,13 @@ func GetComunidadMembers(administracionService administracion.AdministracionServ
 			})
 		}
 
-		// Asigno el filtro de comunidad para obtener trayectos
+		// Filtros fijos para este endpoint
 		comunidadID := uint(c.Locals("comunidadID").(int))
+		userID := c.Locals("user").(authdtos.ResponseUsuario).ID
 		request.ComunidadID = comunidadID
-		response, err := administracionService.GetComunidadMembersService(comunidadID)
+		request.AdministradorID = userID
+
+		response, err := administracionService.GetMiembrosService(request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
@@ -175,6 +180,33 @@ func PutSede(administracionService administracion.AdministracionService) fiber.H
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
 			"message": "Usuario eliminado de la comunidad con exito",
+		})
+	}
+}
+
+func GetUser(administracionService administracion.AdministracionService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request UsuarioFiltros.UsuarioFiltro
+		err := c.QueryParser(&request)
+		if err != nil {
+			logs.Error(err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error al analizar la solicitud",
+			})
+		}
+
+		response, err := administracionService.GetUsuarioService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "Lo siento, no hemos encontrado usuarios que coincidan con tu búsqueda",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Usuario obtenidos con éxito",
 		})
 	}
 }

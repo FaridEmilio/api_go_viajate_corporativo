@@ -16,12 +16,13 @@ import (
 type Repository interface {
 	GetPaisesRepository(filtro filtros.PaisFiltro) (paises []entities.Pais, erro error)
 	UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestAltaMiembro) (erro error)
-	GetComunidadMembersRepository(comunidadId uint) (usuariosHasComunidad []entities.UsuariosHasComunidades, err error)
+	GetMiembrosRepository(filtro filtros.MiembroFiltro) (miembros []entities.UsuariosHasComunidades, err error)
 	GetSedesRepository(comunidadID uint) (sedes []entities.Sede, err error)
 	CreateSedeRepository(request administraciondtos.RequestCreateSede) (erro error)
 	UpdateSedeActivaRepository(sedeID uint, activo bool) (erro error)
 
 	GetUsuariosRepository(filtro usuarioFiltros.UsuarioFiltro) (usuarios []entities.Usuario, totalFilas int64, erro error)
+	GetUsuarioRepository(filtro usuarioFiltros.UsuarioFiltro) (user entities.Usuario, erro error)
 }
 
 func NewAdministracionRepository(conn *database.MySQLClient, util util.UtilService) Repository {
@@ -81,13 +82,21 @@ func (r *repository) UpdateUsuarioHasComunidadRepository(request comunidaddtos.R
 	return nil
 }
 
-func (r *repository) GetComunidadMembersRepository(comunidadId uint) (usuariosHasComunidad []entities.UsuariosHasComunidades, err error) {
-	err = r.SQLClient.
-		Preload("Comunidad").
-		Preload("Usuario").
-		Where("comunidades_id = ? AND activo = ?", comunidadId, true).
-		Find(&usuariosHasComunidad).Error
+func (r *repository) GetMiembrosRepository(filtro filtros.MiembroFiltro) (miembros []entities.UsuariosHasComunidades, err error) {
+	resp := r.SQLClient.Model(&entities.UsuariosHasComunidades{}).Where("comunidades_id", filtro.ComunidadID)
 
+	if filtro.Activos {
+		resp.Where("activo", true)
+	}
+
+	if filtro.Expulsados {
+		resp.Where("activo", false)
+	}
+
+	//if filtro.adm
+
+	resp.Preload("Usuario")
+	resp.Find(&miembros)
 	return
 }
 
@@ -123,14 +132,6 @@ func (r *repository) GetUsuariosRepository(filtro usuarioFiltros.UsuarioFiltro) 
 	resp := r.SQLClient.Model(entities.Usuario{}).
 		Joins("JOIN usuarios_has_comunidades uhc ON uhc.usuarios_id = usuarios.id").
 		Where("uhc.comunidades_id = ?", filtro.ComunidadID)
-
-	if filtro.Activos {
-		resp.Where("uhc.activo", true)
-	}
-
-	if filtro.Expulsados {
-		resp.Where("uhc.activo", false)
-	}
 
 	// Excluir al usuario que hizo la consulta
 	//if filtro.UsuarioID > 0 {
@@ -178,3 +179,32 @@ func (r *repository) GetUsuariosRepository(filtro usuarioFiltros.UsuarioFiltro) 
 // 	}
 // 	return
 // }
+
+func (r *repository) GetUsuarioRepository(filtro usuarioFiltros.UsuarioFiltro) (user entities.Usuario, erro error) {
+	resp := r.SQLClient.Model(entities.Usuario{})
+	// Si se especifican campos, usar Select para elegirlos
+	if len(filtro.SelectFields) > 0 {
+		resp = resp.Select(filtro.SelectFields)
+	}
+
+	if len(filtro.Email) > 0 {
+		resp.Where("email = ?", filtro.Email)
+	}
+
+	if filtro.ID > 0 {
+		resp.Where("id = ?", filtro.ID)
+	}
+
+	// Verificar si hay cláusulas de filtro (como WHERE) antes de ejecutar la consulta
+	if len(resp.Statement.Clauses) == 0 {
+		erro = errors.New("se requiere al menos un filtro para realizar la consulta")
+		return
+	}
+
+	resp.First(&user)
+	if resp.Error != nil {
+		erro = errors.New("user not found")
+		return
+	}
+	return
+}

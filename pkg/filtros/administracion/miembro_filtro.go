@@ -1,15 +1,19 @@
 package filtros
 
+import "github.com/faridEmilio/api_go_viajate_corporativo/pkg/filtros"
+
 type MiembroFiltro struct {
-	Paginacion
-	Nombre                    string
-	Apellido                  string
-	ComunidadID               uint
-	SexoMasculino             bool
-	SexoFemenino              bool
-	OrdenarFechaNacimiento    bool
-	CargarSoloMiembros        bool
-	CargarSoloAdministradores bool
-	UsuarioID                 uint
-	CargarEliminados          bool
+	filtros.Paginacion
+	Nombre                 string
+	Apellido               string
+	ComunidadID            uint
+	SexoMasculino          bool
+	SexoFemenino           bool
+	OrdenarFechaNacimiento bool
+	UsuarioID              uint
+	Activos                bool
+	Expulsados             bool
+	SoloMiembros           bool
+	SoloAdministradores    bool
+	AdministradorID        uint
 }

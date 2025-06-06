@@ -1,8 +1,14 @@
 package authdtos
 
 import (
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/entities"
 )
+
+type ResponseUsuarios struct {
+	Usuarios []ResponseUsuario `json:"usuarios"`
+	Meta     dtos.Meta         `json:"meta"`
+}
 
 type ResponseUsuario struct {
 	ID                   uint                `json:"id"`
@@ -53,5 +59,12 @@ func (r *ResponseUsuario) ToComunidadesResponse(comunidades []*entities.Comunida
 	r.Comunidades = make([]ResponseComunidad, len(comunidades))
 	for i, entity := range comunidades {
 		r.Comunidades[i].ToComunidadResponse(*entity)
+	}
+}
+
+func (r *ResponseUsuarios) ToResponseUsuarios(entities []entities.Usuario) {
+	r.Usuarios = make([]ResponseUsuario, len(entities))
+	for i, entity := range entities {
+		r.Usuarios[i].FromEntity(entity)
 	}
 }
