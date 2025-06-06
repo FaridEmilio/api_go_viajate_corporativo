@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/faridEmilio/api_go_viajate_corporativo/api/middlewares"
+	"github.com/faridEmilio/api_go_viajate_corporativo/internal/logs"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/comunidad"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/authdtos"
@@ -65,6 +66,7 @@ func PostComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var request comunidaddtos.RequestComunidad
 		if err := c.BodyParser(&request); err != nil {
+			logs.Error(err)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Error al analizar la solicitud",
 			})
