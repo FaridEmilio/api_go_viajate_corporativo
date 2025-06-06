@@ -15,10 +15,10 @@ import (
 
 type ComunidadRepository interface {
 	GetComunidadesRepository(request comunidaddtos.RequestComunidad) (comunidades []entities.Comunidad, total int64, erro error)
-	PostComunidadRepository(comunidad entities.Comunidad) (erro error)
+	PostComunidadRepository(comunidad entities.Comunidad) (entities.Comunidad, error)
 	UpdateComunidadRepository(comunidad entities.Comunidad) (erro error)
 	PostUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
-	GetUsuarioComunidadRepository(request comunidaddtos.RequestAltaMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error)
+	GetUsuarioComunidadRepository(request comunidaddtos.RequestMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error)
 	UpdateUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
 	GetTipoComunidadRepository(request comunidaddtos.RequestTipoComunidad) (tipocomunidad []entities.TipoComunidad, total int64, erro error)
 	// CRUD TRAYECTO
@@ -104,14 +104,11 @@ func (r *comunidadRepository) GetComunidadesRepository(request comunidaddtos.Req
 	return
 }
 
-func (r *comunidadRepository) PostComunidadRepository(comunidad entities.Comunidad) (erro error) {
-	err := r.SqlClient.Create(&comunidad).Error
-	if err != nil {
-		erro = errors.New("no se pudo crear la comunidad")
-		return
+func (r *comunidadRepository) PostComunidadRepository(comunidad entities.Comunidad) (entities.Comunidad, error) {
+	if err := r.SqlClient.Create(&comunidad).Error; err != nil {
+		return entities.Comunidad{}, fmt.Errorf("error al crear comunidad")
 	}
-
-	return
+	return comunidad, nil
 }
 
 func (r *comunidadRepository) UpdateComunidadRepository(comunidad entities.Comunidad) (erro error) {
@@ -123,8 +120,8 @@ func (r *comunidadRepository) UpdateComunidadRepository(comunidad entities.Comun
 	return
 }
 
-func (r *comunidadRepository) GetUsuarioComunidadRepository(request comunidaddtos.RequestAltaMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error) {
-	resp := r.SqlClient.Model(&entities.Comunidad{}).Where("comunidades_id = ? AND usuarios_id = ?", request.ComunidadId, request.UsuariosID).Find(&usuariocomunidad)
+func (r *comunidadRepository) GetUsuarioComunidadRepository(request comunidaddtos.RequestMiembro) (usuariocomunidad []entities.UsuariosHasComunidades, erro error) {
+	resp := r.SqlClient.Model(&entities.Comunidad{}).Where("comunidades_id = ? AND usuarios_id = ?", request.ComunidadID, request.UsuariosID).Find(&usuariocomunidad)
 	if resp.Error != nil {
 		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
 		return

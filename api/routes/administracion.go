@@ -57,7 +57,7 @@ func GetPaises(administracionService administracion.AdministracionService) fiber
 
 func PutUsuaroHasComunidad(administracionService administracion.AdministracionService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var request comunidaddtos.RequestAltaMiembro
+		var request comunidaddtos.RequestMiembro
 		err := c.BodyParser(&request)
 		if err != nil {
 			logs.Error(err)

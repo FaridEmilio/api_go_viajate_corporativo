@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/auth"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/domains/util"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos"
 	"github.com/faridEmilio/api_go_viajate_corporativo/pkg/dtos/comunidaddtos"
@@ -28,13 +29,13 @@ type ComunidadService interface {
 	PostTrayectoService(request comunidaddtos.RequestTrayecto) (erro error)
 	GetTrayectosService(filtro filtros.TrayectoFiltro) (response comunidaddtos.ResponseTrayectos, erro error)
 
-	// // Alta de un miembro en una comunidad
 	GetComunidadesService(filtro comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error)
-	PostComunidadService(request comunidaddtos.RequestComunidad) (erro error)
+	PostComunidadService(request comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidad, erro error)
 	UploadImageToFirebase(file *multipart.FileHeader) (string, error)
+
 	PutComunidadService(request comunidaddtos.RequestComunidad) (erro error)
-	PostUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error)
-	PutUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error)
+	PostUsuarioComunidadService(request comunidaddtos.RequestMiembro) (nombreComunidad string, erro error)
+	PutUsuarioComunidadService(request comunidaddtos.RequestMiembro) (erro error)
 	GetTipoComunidadService(request comunidaddtos.RequestTipoComunidad) (response comunidaddtos.ResponseTipoComunidades, erro error)
 
 	// VEHICULOS
@@ -43,10 +44,11 @@ type ComunidadService interface {
 	GetMisVehiculosService(userID uint) (response comunidaddtos.ResponseVehiculos, erro error)
 }
 
-func NewComunidadService(repo ComunidadRepository, util util.UtilService, firebaseRepo storage.FirebaseRemoteRepository) ComunidadService {
+func NewComunidadService(repo ComunidadRepository, util util.UtilService, authRepository auth.Repository, firebaseRepo storage.FirebaseRemoteRepository) ComunidadService {
 	service := comunidadService{
 		repository:               repo,
 		util:                     util,
+		authRepository:           authRepository,
 		firebaseRemoteRepository: firebaseRepo,
 	}
 	return &service
@@ -55,10 +57,11 @@ func NewComunidadService(repo ComunidadRepository, util util.UtilService, fireba
 type comunidadService struct {
 	repository               ComunidadRepository
 	util                     util.UtilService
+	authRepository           auth.Repository
 	firebaseRemoteRepository storage.FirebaseRemoteRepository
 }
 
-// func (s *comunidadService) PostAltaMiembroService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error) {
+// func (s *comunidadService) PostAltaMiembroService(request comunidaddtos.RequestMiembro) (nombreComunidad string, erro error) {
 
 // 	erro = request.IsValidCode()
 // 	if erro != nil {
@@ -191,12 +194,12 @@ func (s *comunidadService) GetComunidadesService(request comunidaddtos.RequestCo
 	return
 }
 
-func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestComunidad) (erro error) {
-
+func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidad, erro error) {
 	erro = request.Validate()
 	if erro != nil {
 		return
 	}
+
 	requesttipo := comunidaddtos.RequestTipoComunidad{
 		Id: int(request.TipoComunidadId),
 	}
@@ -216,13 +219,39 @@ func (s *comunidadService) PostComunidadService(request comunidaddtos.RequestCom
 		erro = errors.New("comunidad existente")
 		return
 	}
+
 	comunidad := request.ToEntity()
 	uuid := NewUUID()
 	comunidad.CodigoAcceso = uuid
-	erro = s.repository.PostComunidadRepository(*comunidad)
+
+	comunidadEntity, erro := s.repository.PostComunidadRepository(*comunidad)
 	if erro != nil {
 		return
 	}
+
+	// Al crear una comunidad, se cambia el rol del usuario seleccionado a administrador de la comunidad creada
+	updateData := map[string]interface{}{
+		"roles_id": 2, // Administradores y Clientes
+	}
+
+	erro = s.authRepository.UpdateUserDataRepository(uint(request.UsuariosID), updateData)
+	if erro != nil {
+		return
+	}
+
+	// Se crea la relación usuario-comunidad
+	usuarioHasComunidad := entities.UsuariosHasComunidades{
+		ComunidadesID: comunidadEntity.ID,
+		UsuariosID:    request.ID,
+		Activo:        true,
+	}
+
+	erro = s.repository.PostUsuarioComunidadRepository(usuarioHasComunidad)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntity(comunidadEntity)
 	return
 }
 
@@ -300,7 +329,7 @@ func (s *comunidadService) PutComunidadService(request comunidaddtos.RequestComu
 	return
 }
 
-func (s *comunidadService) PostUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (nombreComunidad string, erro error) {
+func (s *comunidadService) PostUsuarioComunidadService(request comunidaddtos.RequestMiembro) (nombreComunidad string, erro error) {
 	if len(request.Codigo) < 1 {
 		erro = errors.New("debe proporcionar un codigo de comunidad")
 		return
@@ -339,7 +368,7 @@ func (s *comunidadService) PostUsuarioComunidadService(request comunidaddtos.Req
 	return
 }
 
-func (s *comunidadService) PutUsuarioComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error) {
+func (s *comunidadService) PutUsuarioComunidadService(request comunidaddtos.RequestMiembro) (erro error) {
 	if request.Activo == nil {
 		erro = errors.New("debe enviar una funcion")
 		return

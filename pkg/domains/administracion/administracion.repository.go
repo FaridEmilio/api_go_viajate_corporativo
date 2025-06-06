@@ -15,7 +15,7 @@ import (
 
 type Repository interface {
 	GetPaisesRepository(filtro filtros.PaisFiltro) (paises []entities.Pais, erro error)
-	UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestAltaMiembro) (erro error)
+	UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestMiembro) (erro error)
 	GetMiembrosRepository(filtro filtros.MiembroFiltro) (miembros []entities.UsuariosHasComunidades, err error)
 	GetSedesRepository(comunidadID uint) (sedes []entities.Sede, err error)
 	CreateSedeRepository(request administraciondtos.RequestCreateSede) (erro error)
@@ -60,14 +60,14 @@ func (r *repository) GetPaisesRepository(filtro filtros.PaisFiltro) (paises []en
 	return paises, nil
 }
 
-func (r *repository) UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestAltaMiembro) error {
+func (r *repository) UpdateUsuarioHasComunidadRepository(request comunidaddtos.RequestMiembro) error {
 	entity := entities.UsuariosHasComunidades{
 		UsuariosID:    request.UsuariosID,
-		ComunidadesID: request.ComunidadId,
+		ComunidadesID: request.ComunidadID,
 	}
 
 	result := r.SQLClient.Model(&entity).
-		Where("usuarios_id = ? AND comunidades_id = ?", request.UsuariosID, request.ComunidadId).
+		Where("usuarios_id = ? AND comunidades_id = ?", request.UsuariosID, request.ComunidadID).
 		Update("activo", false)
 
 	if result.Error != nil {

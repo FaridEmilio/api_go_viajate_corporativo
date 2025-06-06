@@ -14,8 +14,11 @@ import (
 
 func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager, comunidadService comunidad.ComunidadService, utilService util.UtilService) {
 	//CRUD COMUNIDAD
-	app.Get("/comunidades", middlewares.ValidarPermiso("admin.comunidad"), GetComunidades(comunidadService))
+	// ** SUPERADMIN crean comunidades
 	app.Post("/comunidad", middlewares.ValidarPermiso("create.comunidad"), PostComunidad(comunidadService))
+
+	// ** ADMIN administran  comunidades
+	app.Get("/comunidades", middlewares.ValidarPermiso("admin.comunidad"), GetComunidades(comunidadService))
 	app.Post("/update-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PutComunidad(comunidadService))
 	app.Post("/miembro", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
 
@@ -61,42 +64,24 @@ func GetComunidades(comunidadService comunidad.ComunidadService) fiber.Handler {
 func PostComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var request comunidaddtos.RequestComunidad
-		err := c.BodyParser(&request)
-		if err != nil {
+		if err := c.BodyParser(&request); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Error al analizar la solicitud",
 			})
 		}
-		condicion := true
-		form, err := c.MultipartForm()
-		if err != nil {
-			fmt.Println("Error al leer el form-data")
-			condicion = false
-		}
-		if condicion {
-			files := form.File["foto_perfil"]
-			if len(files) > 0 {
-				file := files[0]
-				urlFoto, err := comunidadService.UploadImageToFirebase(file)
-				if err != nil {
-					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-						"error": "Error subiendo la imagen",
-					})
-				}
-				request.FotoPerfil = urlFoto
-			}
-		}
 
-		err = comunidadService.PostComunidadService(request)
+		response, err := comunidadService.PostComunidadService(request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 				"status":  false,
 				"message": err.Error(),
 			})
 		}
+
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
-			"message": "comunidad registrada con exito",
+			"data":    response,
+			"message": "Comunidad creada con éxito",
 		})
 	}
 }
@@ -127,7 +112,7 @@ func PutComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 
 func PostUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var request comunidaddtos.RequestAltaMiembro
+		var request comunidaddtos.RequestMiembro
 		err := c.BodyParser(&request)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -151,7 +136,7 @@ func PostUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Han
 
 func PutUsuarioComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var request comunidaddtos.RequestAltaMiembro
+		var request comunidaddtos.RequestMiembro
 
 		err := c.BodyParser(&request)
 		if err != nil {

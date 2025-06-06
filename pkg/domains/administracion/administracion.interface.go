@@ -11,7 +11,7 @@ import (
 type AdministracionService interface {
 	GetPaisesService(filtro filtros.PaisFiltro) (response administraciondtos.ResponsePaises, erro error)
 	//GetMiembrosService(filtro filtros.MiembroFiltro) (response administraciondtos.ResponseMiembros, erro error)
-	PutUsuarioHasComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error)
+	PutUsuarioHasComunidadService(request comunidaddtos.RequestMiembro) (erro error)
 	GetMiembrosService(filtro filtros.MiembroFiltro) (response administraciondtos.ResponseMiembros, erro error)
 	GetSedesService(comunidadID uint) (response administraciondtos.ResponseSedes, erro error)
 	CreateSedeService(request administraciondtos.RequestCreateSede) (erro error)

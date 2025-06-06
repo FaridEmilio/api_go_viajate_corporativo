@@ -6,14 +6,14 @@ import (
 	"strings"
 )
 
-type RequestAltaMiembro struct {
+type RequestMiembro struct {
 	Codigo      string `json:"codigo"`
 	UsuariosID  uint   `json:"usuarios_id"`
-	ComunidadId uint   `json:"comunidad_id"`
+	ComunidadID uint   `json:"comunidad_id"`
 	Activo      *bool  `json:"activo"`
 }
 
-func (r *RequestAltaMiembro) IsValidCode() error {
+func (r *RequestMiembro) IsValidCode() error {
 	if r.Codigo == "" {
 		return errors.New("Por favor, ingresa un código válido")
 	}

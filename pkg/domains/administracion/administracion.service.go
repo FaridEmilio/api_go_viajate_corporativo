@@ -66,7 +66,7 @@ func (s *service) GetPaisesService(filtro filtros.PaisFiltro) (response administ
 	return
 }
 
-func (s *service) PutUsuarioHasComunidadService(request comunidaddtos.RequestAltaMiembro) (erro error) {
+func (s *service) PutUsuarioHasComunidadService(request comunidaddtos.RequestMiembro) (erro error) {
 	erro = s.repository.UpdateUsuarioHasComunidadRepository(request)
 	if erro != nil {
 		return

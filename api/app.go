@@ -39,7 +39,7 @@ func InicializarApp(clienteHttp *http.Client, clienteSql *database.MySQLClient, 
 	administracionRepository := administracion.NewAdministracionRepository(clienteSql, utilService)
 
 	// SERVICIOS
-	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService, firebaseRemoteRepository)
+	comunidadService := comunidad.NewComunidadService(comunidadRepository, utilService, authRepository, firebaseRemoteRepository)
 	authService := auth.NewAuthService(authRepository, utilService)
 	administracionService := administracion.NewAdministracionService(administracionRepository, utilService)
 
