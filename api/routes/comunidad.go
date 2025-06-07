@@ -15,11 +15,11 @@ import (
 
 func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager, comunidadService comunidad.ComunidadService, utilService util.UtilService) {
 	//CRUD COMUNIDAD
-	// ** SUPERADMIN crean comunidades
+	// ** SUPERADMIN crean y ven las comunidades
 	app.Post("/comunidad", middlewares.ValidarPermiso("create.comunidad"), PostComunidad(comunidadService))
+	app.Get("/comunidades", middlewares.ValidarPermiso("show.comunidades"), GetComunidades(comunidadService))
 
 	// ** ADMIN administran  comunidades
-	app.Get("/comunidades", middlewares.ValidarPermiso("admin.comunidad"), GetComunidades(comunidadService))
 	app.Post("/update-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PutComunidad(comunidadService))
 	app.Post("/miembro", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
 
