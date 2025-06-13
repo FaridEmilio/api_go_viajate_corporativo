@@ -33,6 +33,7 @@ type ComunidadService interface {
 	GetComunidadesService(filtro comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidades, erro error)
 	PostComunidadService(request comunidaddtos.RequestComunidad) (response comunidaddtos.ResponseComunidad, erro error)
 	UploadImageToFirebase(file *multipart.FileHeader) (string, error)
+	GetComunidadService(filtro filtros.ComunidadFiltro) (response comunidaddtos.ResponseComunidad, erro error)
 
 	PutComunidadService(request comunidaddtos.RequestComunidad) (erro error)
 	PostUsuarioComunidadService(request comunidaddtos.RequestMiembro) (nombreComunidad string, erro error)
@@ -445,5 +446,15 @@ func (s *comunidadService) PostVehiculoService(request comunidaddtos.RequestVehi
 	}
 
 	response.ToResponseVehiculo(vehiculo)
+	return
+}
+
+func (s *comunidadService) GetComunidadService(filtro filtros.ComunidadFiltro) (response comunidaddtos.ResponseComunidad, erro error) {
+	entity, erro := s.repository.GetComunidadRepository(filtro)
+	if erro != nil {
+		return
+	}
+
+	response.FromEntity(entity)
 	return
 }

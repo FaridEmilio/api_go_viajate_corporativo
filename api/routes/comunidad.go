@@ -22,6 +22,7 @@ func ComunidadRoutes(app fiber.Router, middlewares middlewares.MiddlewareManager
 	// ** ADMIN administran  comunidades
 	app.Post("/update-comunidad", middlewares.ValidarPermiso("admin.comunidad"), PutComunidad(comunidadService))
 	app.Post("/miembro", middlewares.ValidarPermiso("admin.comunidad"), PostUsuarioComunidad(comunidadService))
+	app.Get("/:comunidad_id", middlewares.ValidarPermiso("show.comunidad"), GetComunidad(comunidadService))
 
 	app.Get("/tipo-comunidad", middlewares.ValidarPermiso("admin.comunidad"), GetTipoComunidad(comunidadService))
 
@@ -108,6 +109,34 @@ func PutComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"status":  true,
 			"message": "comunidad actualizada con exito",
+		})
+	}
+}
+
+func GetComunidad(comunidadService comunidad.ComunidadService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var request filtros.ComunidadFiltro
+		err := c.QueryParser(&request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Error en los parámetros enviados",
+			})
+		}
+
+		comunidadID := uint(c.Locals("comunidadID").(int))
+		request. ID = comunidadID
+		response, err := comunidadService.GetComunidadService(request)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  false,
+				"message": "Lo sentimos, no pudimos encontrar la comunidad solicitada. Por favor revisa los datos e inténtalo nuevamente",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"status":  true,
+			"data":    response,
+			"message": "Comunidad obtenida con éxito",
 		})
 	}
 }

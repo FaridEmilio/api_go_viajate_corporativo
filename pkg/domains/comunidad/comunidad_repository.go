@@ -15,6 +15,7 @@ import (
 
 type ComunidadRepository interface {
 	GetComunidadesRepository(request comunidaddtos.RequestComunidad) (comunidades []entities.Comunidad, total int64, erro error)
+	GetComunidadRepository(filtro filtros.ComunidadFiltro) (entity entities.Comunidad, erro error)
 	PostComunidadRepository(comunidad entities.Comunidad) (entities.Comunidad, error)
 	UpdateComunidadRepository(comunidad entities.Comunidad) (erro error)
 	PostUsuarioComunidadRepository(usuariocomunidad entities.UsuariosHasComunidades) (erro error)
@@ -306,4 +307,44 @@ func (r *comunidadRepository) PostVehiculoRepository(vehiculo entities.Vehiculo)
 	}
 
 	return vehiculo, nil
+}
+
+func (r *comunidadRepository) GetComunidadRepository(filtro filtros.ComunidadFiltro) (entity entities.Comunidad, erro error) {
+	resp := r.SqlClient.Model(&entities.Comunidad{})
+	if filtro.ID > 0 {
+		resp.Where("comunidades.id = ?", filtro.ID)
+	}
+
+	if len(filtro.Nombre) > 0 {
+		resp.Where("comunidades.nombre REGEXP ?", filtro.Nombre)
+	}
+
+	if len(filtro.CodigoAcceso) > 0 {
+		resp.Where("comunidades.codigo_acceso = ?", filtro.CodigoAcceso)
+	}
+
+	resp.Joins("INNER JOIN localidades l ON l.id = comunidades.localidades_id").
+		Preload("Localidad", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "nombre", "provincias_id").
+				Preload("Provincia", func(db *gorm.DB) *gorm.DB {
+					return db.Select("id", "nombre", "paises_id").
+						Preload("Pais", func(db *gorm.DB) *gorm.DB {
+							return db.Select("id", "nombre")
+						})
+				})
+		})
+
+	resp.Joins("INNER JOIN tipo_comunidad tp ON tp.id = comunidades.tipo_comunidad_id").
+		Preload("TipoComunidad", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "tipo")
+		})
+
+	resp.Order("comunidades.created_at DESC")
+	resp.First(&entity)
+	if resp.Error != nil {
+		erro = fmt.Errorf(ERROR_CONSULTA, erro.Error())
+		return
+	}
+
+	return
 }
